@@ -1,0 +1,15 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "opbk",
+            "database": "opbk",
+            "username": "postgres",
+            "password": "postgres123",
+            "connectionTimeout": 100
+        }
+    ]
+}
