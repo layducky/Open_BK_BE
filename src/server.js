@@ -6,7 +6,7 @@ require("dotenv").config();
 const app = express()
 
 const corsOptions = {
-  origin: 'https://open-bk.vercel.app',
+  origin: process.env.CLIENT_URL || 'http://localhost:3000',
   methods: ['GET', 'POST', 'DELETE', 'PUT', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
