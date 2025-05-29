@@ -1,6 +1,5 @@
 const { Test, Question } = require('../../sequelize');
-const sequelize = require('../../sequelize'); // Ensure you have the correct path to your sequelize instance
-
+const sequelize = require('../../sequelize');
 const TestController = {
     async generateTest(req, res) {
         try {

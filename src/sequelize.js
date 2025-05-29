@@ -11,7 +11,7 @@ const MaterialModel = require("./models/material.model");
 const ParticipateModel = require("./models/participate.model");
 const PreviewModel = require("./models/preview.model");
 
-pg.defaults.ssl = true;  
+// pg.defaults.ssl = true;  
 const sequelize = new Sequelize(
   process.env.DB_URL,
   {

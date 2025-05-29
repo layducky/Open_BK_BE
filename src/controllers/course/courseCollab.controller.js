@@ -47,11 +47,16 @@ const CourseCollab = {
       try {
          const { authorID } = req.params;
 
-         const ownedCourses = await Course.findAll({
+          const ownedCourses = await Course.findAll({
             where: {
                authorID,
             },
-         });
+            include: {
+               model: User,
+               as: 'authorInfo',
+               attributes: ['name', 'imageUrl'],
+            },
+          });
 
          if (ownedCourses.length === 0) {
             return res.status(404).json({ error: 'No owned courses found for this author' });
