@@ -47,7 +47,7 @@ const signUp = async (req, res) => {
       res.status(200).json({userID, role, message: 'Register successfully!'})
 
    } catch (err) {
-      res.status(500).json({ err })
+      res.status(500).json({ err: 'Error during registration', details: err.message })
    }
 }
 
@@ -67,6 +67,7 @@ const logIn = async (req, res) => {
          process.env.ACCESS_TOKEN_SECRET,
          { expiresIn: '1d' }
       )
+      console.log(2);
    
       // const refreshToken = jwt.sign(
       //    { "username": existUser.name, "userID": existUser.userID, "userRole": existUser.role },
@@ -81,7 +82,7 @@ const logIn = async (req, res) => {
          sameSite: 'None',
          partitioned: true
       })
-
+      console.log(3);
       // store refresh token in cookies
       // res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 })
       // pass accessToken to frontend (client-side) for later API calls
@@ -90,7 +91,7 @@ const logIn = async (req, res) => {
       res.status(200).json({ userID, role, message: 'Login successfully!' })
 
    } catch (err) {
-      return res.status(500).json({ err })
+      return res.status(500).json({ err: 'Error during login', details: err.message })
    }
 }
 
