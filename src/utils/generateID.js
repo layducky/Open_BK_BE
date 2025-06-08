@@ -18,8 +18,13 @@ const generateUnitID = (courseID) => {
   return `UNI${numberPart}${randomID}`;
 };
 
-const generateQuestionID = (unitID) => {
-  const numberPart = unitID.match(/\d+/)[0];
+const generateTestID = () => {
+  const randomID = Math.floor(100 + Math.random() * 90000000);
+  return `TES${randomID}`;
+};
+
+const generateQuestionID = (testID) => {
+  const numberPart = testID.match(/\d+/)[0];
   const randomID = Math.floor(100 + Math.random() * 900);
   return `QUE${numberPart}${randomID}`;
 };
@@ -28,6 +33,7 @@ module.exports = {
   generateLearnerID,
   generateCollabID,
   generateCourseID,
+  generateTestID,
   generateUnitID,
   generateQuestionID
 };

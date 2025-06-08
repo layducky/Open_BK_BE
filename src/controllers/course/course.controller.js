@@ -20,7 +20,7 @@ const CourseController = {
     }
   },
 
-  async getCourseById(req, res) {
+  async getCourseByID(req, res) {
     try {
       const { courseID } = req.params
       const course = await Course.findOne({where: { courseID },
@@ -40,12 +40,12 @@ const CourseController = {
 
   async updateCourse(req, res) {
     try {
-      const courseId = req.params.courseID;
+      const courseID = req.params.courseID;
       const {
         description: newDescription,
         price: newPrice,
         courseName: newCourseName,
-        authorId: newAuthorId,
+        authorID: newAuthorID,
       } = req.body;
 
       const fieldsToUpdate = filterNull({
@@ -54,12 +54,12 @@ const CourseController = {
         courseName: newCourseName,
       });
 
-      const course = await Course.findByPk(courseId);
+      const course = await Course.findByPk(courseID);
       if (!course) {
         return res.status(404).json({ error: 'Course not found' });
       }
 
-      const author = await User.findByPk(newAuthorId);
+      const author = await User.findByPk(newAuthorID);
       if (!author) {
         return res.status(404).json({ error: 'Author not found' });
       }
@@ -67,12 +67,12 @@ const CourseController = {
       if (author.role !== 'COLLAB') {
         return res.status(403).json({ error: 'You do not have permission to update this course, role must be COLLAB' });
       }
-      if (course.authorId !== newAuthorId) {
+      if (course.authorID !== newAuthorID) {
         return res.status(403).json({ error: 'You are not the author of this course and cannot update it' });
       }
 
       const [updatedRowsCount] = await Course.update(fieldsToUpdate, {
-        where: { courseID: courseId },
+        where: { courseID: courseID },
       });
       if (updatedRowsCount === 0) {
         return res.status(400).json({ error: 'No changes were made' });

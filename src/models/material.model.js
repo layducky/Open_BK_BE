@@ -2,7 +2,7 @@
 const { Sequelize } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
   return sequelize.define("Material", {
-    id:{
+    materialID:{
       type: DataTypes.UUID,
       primaryKey: true,
       defaultValue: DataTypes.UUIDV4,

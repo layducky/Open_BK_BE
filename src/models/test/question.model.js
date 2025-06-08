@@ -6,9 +6,8 @@ module.exports = (sequelize, DataTypes) => {
     questionID: {
       type: DataTypes.STRING,
       primaryKey: true,
-      allowNull: false,
     },
-    unitID: {
+    testID: {
       type: DataTypes.STRING,
       allowNull: false,
     },
@@ -49,7 +48,7 @@ module.exports = (sequelize, DataTypes) => {
     tableName: 'Question',
     indexes: [{
       unique: true,
-      fields: ['unitID', 'numericalOrder'],
+      fields: ['testID', 'numericalOrder'],
       msg: 'Question with this order already exists.',
     }]
   });

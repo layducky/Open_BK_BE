@@ -3,7 +3,7 @@ const { Sequelize } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
 
   return sequelize.define("Preview", {
-    previewId: {
+    previewID: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,

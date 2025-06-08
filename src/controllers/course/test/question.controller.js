@@ -1,23 +1,23 @@
-const { Unit, Question } = require('../../sequelize');
-const { generateQuestionID } = require('../../utils/generateID');
-const {filterNull, checkNull} = require('../../common/ultis');
+const { Unit, Question } = require('../../../sequelize');
+const { generateQuestionID } = require('../../../utils/generateID');
+const {filterNull, checkNull} = require('../../../common/ultis');
 
 
 const QuestionController = {
     async createQuestion(req, res) {
         try {
-            const { unitID } = req.params;
+            const { testID } = req.params;
 
             const { numericalOrder, content, explanation, correctAnswer, answerA, answerB, answerC, answerD } = req.body;
             if(checkNull({ numericalOrder, content, answerA, answerB, answerC, answerD })) return res.status(400).json({message: 'Bad request, some fields are missing'})
 
-            const unit = await Unit.findByPk(unitID);
+            const unit = await Unit.findByPk(testID);
             if (!unit) return res.status(404).json({ error: 'Unit not found' });
 
-            const questionID = generateQuestionID(unitID);
+            const questionID = generateQuestionID(testID);
             const filterCreate = filterNull({ 
                 questionID, 
-                unitID,
+                testID,
                 numericalOrder, 
                 content, 
                 explanation, 
@@ -39,15 +39,15 @@ const QuestionController = {
   
     async getAllQuestions(req, res) {
         try {
-            const { unitID } = req.params;
+            const { testID } = req.params;
             const unit = await Unit.findOne({
                 where: {
-                    unitID
+                    testID
                 }
             });
             if (!unit) return res.status(404).json({ error: 'Unit not found' });
             const questions = await Question.findAll(
-                { where: { unitID } }
+                { where: { testID } }
             );
             res.status(200).json(questions);
 

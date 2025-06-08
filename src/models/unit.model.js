@@ -1,11 +1,8 @@
-const { Sequelize } = require("sequelize");
-
 module.exports = (sequelize, DataTypes) => {
   return sequelize.define("Unit", {
     unitID: {
       type: DataTypes.STRING,
       primaryKey: true,
-      allowNull: false,
     },
     courseID: {
       type: DataTypes.STRING,
@@ -27,14 +24,9 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    numberOfQuestions: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-      allowNull: false,
-    },
   }, {
     modelName: 'Unit',
-    tableName: 'Units',
+    tableName: 'Unit',
     indexes: [{
       unique: true,
       fields: ['courseID', 'numericalOrder'],

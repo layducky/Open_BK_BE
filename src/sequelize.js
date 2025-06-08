@@ -3,13 +3,16 @@ const { Sequelize, DataTypes } = require("sequelize");
 const UserModel = require("./models/user.model");
 const CourseModel = require("./models/course.model");
 const UnitModel = require("./models/unit.model");
-const QuestionModel = require("./models/question.model");
 const CommentModel = require("./models/comment.model");
-const TestModel = require("./models/test.model");
 const ContQuestionModel = require("./models/contQuestion.model");
 const MaterialModel = require("./models/material.model");
 const ParticipateModel = require("./models/participate.model");
 const PreviewModel = require("./models/preview.model");
+
+const TestModel = require("./models/test/test.model");
+const QuestionModel = require("./models/test/question.model");
+const submissionModel = require("./models/test/submission.model");
+const quesAnswerModel = require("./models/test/quesAns.model");
 
 // pg.defaults.ssl = true;  
 const sequelize = new Sequelize(
@@ -23,14 +26,16 @@ const sequelize = new Sequelize(
 const User = UserModel(sequelize, DataTypes);
 const Course = CourseModel(sequelize, DataTypes);
 const Unit = UnitModel(sequelize, DataTypes);
-const Question = QuestionModel(sequelize, DataTypes);
 const Comment = CommentModel(sequelize, DataTypes);
 const ContQuestion = ContQuestionModel(sequelize, DataTypes);
-const Test = TestModel(sequelize, DataTypes);
 const Material = MaterialModel(sequelize, DataTypes);
 const Participate = ParticipateModel(sequelize, DataTypes);
 const Preview = PreviewModel(sequelize, DataTypes);
 
+const Test = TestModel(sequelize, DataTypes);
+const Question = QuestionModel(sequelize, DataTypes);
+const Submission = submissionModel(sequelize, DataTypes);
+const QuesAnswer = quesAnswerModel(sequelize, DataTypes);
 
 // User - Course
 User.belongsToMany(Course, {
@@ -59,14 +64,20 @@ Course.belongsTo(User, {
 
 // Unit - Course, Question
 Unit.belongsTo(Course, { foreignKey: 'courseID', as: 'course_units', onDelete: 'CASCADE' });
-Unit.hasMany(Question, { foreignKey: 'unitID', as: 'unit_questions' });
+Unit.hasMany(Test, { foreignKey: 'unitID', as: 'unit_questions' });
+
+// Test - Course, User
+Test.belongsTo(Unit, { foreignKey: 'unitID', as: 'unit' });
+Test.hasMany(Question, { foreignKey: 'testID', as: 'test_questions' });
 
 // Question - Unit
-Question.belongsTo(Unit, {
-  foreignKey: 'unitID',
-  as: 'unit_questions',
+Question.belongsTo(Test, {
+  foreignKey: 'testID',
+  as: 'test_questions',
   onDelete: 'CASCADE',
 });
+
+
 
 // Comment - User
 Comment.belongsTo(User, {
@@ -88,15 +99,9 @@ Participate.belongsTo(Course, {
   onDelete: 'CASCADE',
 });
 
-// Test - Course, User
-Test.belongsTo(Course, { foreignKey: 'courseID', as: 'course' });
-Test.belongsTo(User, { foreignKey: 'userID', as: 'user' });
 
-// Kiểm tra kết nối và đồng bộ database
 (async () => {
   try {
-    
-
     await sequelize.authenticate();
     console.log('Database connected');
     await sequelize.sync({ alter: true });

@@ -32,7 +32,7 @@ const getAllUsers = async (req, res) => {
    }
 }
 
-const createUser = async (req, res) => {
+const createCollab = async (req, res) => {
 
    try {
       const { name, email, role, password } = req.body
@@ -163,7 +163,7 @@ const getAllCourseByUser = async (req, res) => {
 module.exports = {
    getUserInfo,
    getAllUsers,
-   createUser,
+   createCollab,
    deleteUser,
    deleteAllUsers,
    updateUserInfo,

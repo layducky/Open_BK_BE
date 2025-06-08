@@ -67,7 +67,6 @@ const logIn = async (req, res) => {
          process.env.ACCESS_TOKEN_SECRET,
          { expiresIn: '1d' }
       )
-      console.log(2);
    
       // const refreshToken = jwt.sign(
       //    { "username": existUser.name, "userID": existUser.userID, "userRole": existUser.role },
@@ -82,7 +81,6 @@ const logIn = async (req, res) => {
          sameSite: 'Strict',
          partitioned: true
       })
-      console.log(3);
       // store refresh token in cookies
       // res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 })
       // pass accessToken to frontend (client-side) for later API calls

@@ -5,28 +5,17 @@ const {filterNull, checkNull} = require('../../common/ultis');
 const CourseCollab = {
   async createCourse(req, res) {
     try {
-      const { authorID, courseName, image, category, description, price } = req.body;
-      console.log(authorID, courseName, image, category, description, price); 
+      const { courseName, image, category, description, price } = req.body;
       const imageUrl = "https://t4.ftcdn.net/jpg/07/77/57/53/360_F_777575393_rZskmeQsWOY8TXBjwjcyBOHamOQfZyHs.jpg";
 
-
-      if (checkNull({ authorID, courseName, imageUrl })) {
+      if (checkNull({ courseName, imageUrl })) {
         return res.status(400).json({ message: 'Course creation failed, some fields are missing' });
       }
 
-
-      const author = await User.findOne({ where: { userID: authorID } });
-      if (!author) {
-        return res.status(404).json({ message: 'Author not found' });
-      }
-
-      if (author.role !== 'COLLAB') {
-        return res.status(403).json({ message: 'You do not have permission to create a course, role must be COLLAB' });
-      }
       const courseID = generateCourseID();
       const fieldsToCreate = filterNull({
         courseID,
-        authorID,
+        authorID: req.user.userID,
         courseName,
         imageUrl,
         category,
@@ -45,11 +34,10 @@ const CourseCollab = {
 
    async getAllOwnedCourses (req, res) {
       try {
-         const { authorID } = req.params;
 
-          const ownedCourses = await Course.findAll({
+         const ownedCourses = await Course.findAll({
             where: {
-               authorID,
+               authorID: req.user.userID,
             },
             include: {
                model: User,
@@ -71,6 +59,7 @@ const CourseCollab = {
 
    async getAllLearners (req, res) {
       try {
+
          const { courseID } = req.params;
 
          const course = await Course.findByPk(courseID);

@@ -1,13 +1,14 @@
 const express = require('express');
-const QuestionController = require('../../../controllers/course/question.controller');
+const QuestionController = require('../../../controllers/course/test/question.controller');
+const { verifyJWT } = require('../../../middleware/verifyJWT');
 
 const router = express.Router();
-const basepath = '/';
 
-router.post(`${basepath}:unitID`, QuestionController.createQuestion); 
-router.get(`${basepath}all/:unitID`, QuestionController.getAllQuestions); 
-router.get(`${basepath}id/:questionID`, QuestionController.getQuestionByID);
-router.put(`${basepath}:questionID`, QuestionController.updateQuestion); 
-router.delete(`${basepath}:questionID`, QuestionController.deleteQuestion); 
+router.use(verifyJWT(["COLLAB", "ADMIN"]))
+router.post(`/:unitID`, QuestionController.createQuestion); 
+router.get(`/all/:unitID`, QuestionController.getAllQuestions); 
+router.get(`/id/:questionID`, QuestionController.getQuestionByID);
+router.put(`/:questionID`, QuestionController.updateQuestion); 
+router.delete(`/:questionID`, QuestionController.deleteQuestion); 
 
 module.exports = router;
