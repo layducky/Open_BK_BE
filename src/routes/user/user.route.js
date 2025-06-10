@@ -16,25 +16,19 @@ const {
 const { verifyJWT } = require('../../middleware/verifyJWT')
 
 router.delete('/:userID', deleteUser)
-
 router.delete('/', deleteAllUsers)
 
 router.post('/', createCollab)
 
 
-router.use(verifyJWT)
-
-router.get('/', getAllUsers)
-
+router.get('/all', getAllUsers)
+router.get('/course', getAllCourseByUser)
 router.get('/:userID', getUserInfo)
 
-
 router.patch('/info', userUpdateValidations, updateUserInfo)
-
 router.patch('info/password', updateUserPassword)
 
 router.patch('/collab/:id', userUpdateValidations, updateCollabPrivilege)
 
-router.get('/course', getAllCourseByUser)
 
 module.exports = router

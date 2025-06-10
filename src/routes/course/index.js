@@ -9,6 +9,5 @@ const router = express.Router();
 router.use('/public', publicRoutes);
 router.use('/collab', collabRoutes);
 router.use('/enroll', courseEnrollRoutes);
-router.use('/content', contentRoutes);
 
 module.exports = router;

@@ -3,7 +3,7 @@ const testRoutes = require('./test');
 const userRoutes = require('./user.route');
 const router = express.Router();
 
-router.use('/test', testRoutes);
 router.use('/', userRoutes);
+router.use('/test', testRoutes);
 
 module.exports = router;

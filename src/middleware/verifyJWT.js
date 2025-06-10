@@ -6,7 +6,6 @@ const { User } = require('../sequelize');
 const verifyJWT = (allowedRoles) => {
    return async (req, res, next) => {
       const token = req.cookies.accessToken;
-
       if (!token) {
          return res.status(401).json({ message: 'Unauthorized, please log in' });
       }

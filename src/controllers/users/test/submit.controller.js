@@ -18,7 +18,7 @@ const SubmitController = {
             });
 
             const submit = await Submission.create(fieldsToCreate);
-            return res.status(201).json({ submitID: submit.submissionID, message: 'Examination start now!' });
+            return res.status(201).json({ submitID: submit.submissionID, duration: submit.duration, message: 'Examination start now!' });
 
         } catch (error) {
             res.status(500).json({ error: error.message });
@@ -37,15 +37,19 @@ const SubmitController = {
             if (submissionRecord.status === "submitted" || submissionRecord.status === "graded") {
                 return res.status(400).json({ message: 'The test is completed and cannot be redone.' });
             }
-
             if (checkNull(submission)) {
                 return res.status(400).json({ message: 'Submit failed, some fields are missing' });
             }
             if (!Array.isArray(submission) || !submission.every(item => item.questionID && item.selectedAns)) {
                 return res.status(400).json({ message: 'Invalid submission data' });
             }
-
+            const now = Date.now();
+            const deadline = (submissionRecord.createdAt + submissionRecord.duration * 60 *1000);
+            if (deadline < now){
+                return res.status(403).json({ error: 'Deadline exceeded' });
+            }
             
+            // Already pass properly condition to save submission
             const quesAnsPromises = submission.map(async item => {
                 const question = await Question.findByPk(item.questionID);
                 const isCorrect = question && question.correctAns === item.selectedAns;
@@ -63,7 +67,8 @@ const SubmitController = {
             const AnsList = await Promise.all(quesAnsPromises);
             const numRightAns = AnsList.reduce((acc, isCorrect) => acc + isCorrect, 0);
             const totalScore = (numRightAns / submissionRecord.numQuests) * 100;
-
+            
+            // If the test is finished, caculate score and close em
             if (status === "submitted") {
                 const submittedAt = new Date();
                 const timeTaken = (submittedAt - submissionRecord.createdAt) / 1000 / 60;

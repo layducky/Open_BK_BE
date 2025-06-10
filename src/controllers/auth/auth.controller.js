@@ -33,10 +33,10 @@ const signUp = async (req, res) => {
       // )
 
       res.cookie('accessToken', accessToken, {
-         httpOnly: true,   
-         // secure: true,
+         httpOnly: true,
+         secure: true,
          maxAge: 24 * 60 * 60 * 1000,
-         sameSite: 'Strict',
+         sameSite: 'Lax',
          partitioned: true
       })
 
@@ -76,9 +76,9 @@ const logIn = async (req, res) => {
 
       res.cookie('accessToken', accessToken, {
          httpOnly: true,   
-         // secure: true, 
+         secure: true,
          maxAge: 24 * 60 * 60 * 1000,
-         sameSite: 'Strict',
+         sameSite: 'Lax',
          partitioned: true
       })
       // store refresh token in cookies
@@ -98,8 +98,8 @@ const logOut = async (req, res) => {
       // Xóa cookie chứa accessToken
       res.clearCookie('accessToken', {
          httpOnly: true,
-         // secure: true,
-         sameSite: 'Strict',
+         secure: true,
+         sameSite: 'Lax',
       })
 
       res.status(200).json({ message: 'Logged out successfully!' })

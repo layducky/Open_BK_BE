@@ -6,7 +6,6 @@ const courseCollabRoutes = require('./courseCollab.route')
 const router = express.Router();
 const { verifyJWT } = require('../../../middleware/verifyJWT');
 
-router.use(verifyJWT(["COLLAB", "ADMIN"]))
 router.use('/question', questionRoutes);
 router.use('/test', testRoutes);
 router.use('/unit', unitRoutes);

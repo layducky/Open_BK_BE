@@ -1,7 +1,6 @@
 const express = require('express')
 const cookieParser = require('cookie-parser')
 const cors = require('cors');
-const { verifyJWT } = require('./middleware/verifyJWT')
 require("dotenv").config();
 
 const app = express()
@@ -19,7 +18,6 @@ app.use(cors(corsOptions));
 app.use(express.json())
 app.use(cookieParser())
 
-app.use('/auth', require('./routes/auth/auth.route'))
 app.use('/', require('./routes'))
 
 const PORT = process.env.PORT || 5000;

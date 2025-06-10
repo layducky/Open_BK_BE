@@ -26,6 +26,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 'pending',
     },
+    duration: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      comment: 'Duration in minutes',
+    },
     numQuests: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -58,6 +63,7 @@ module.exports = (sequelize, DataTypes) => {
         const test = await sequelize.models.Test.findByPk(instance.testID);
         if (test) {
           instance.numQuests = test.numQuests;
+          instance.duration = test.duration;
         }
       },
       beforeUpdate: (instance, options) => {
