@@ -1,9 +1,7 @@
 const express = require('express')
 const router = express.Router()
-const CourseCollab = require('../../controllers/course/courseCollab.controller');
-const { verifyJWT } = require('../../middleware/verifyJWT');
+const CourseCollab = require('../../../controllers/course/courseCollab.controller');
 
-router.use(verifyJWT(["COLLAB", "ADMIN"]))
 router.get('/', CourseCollab.getAllOwnedCourses)
 router.get('/learners/:courseID', CourseCollab.getAllLearners)
 router.post('/', CourseCollab.createCourse);

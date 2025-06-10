@@ -21,24 +21,51 @@ module.exports = (sequelize, DataTypes) => {
         key: 'userID',
       },
     },
-    score: {
-      type: DataTypes.FLOAT,
+    status: {
+      type: DataTypes.ENUM('pending', 'submitted', 'graded'),
       allowNull: false,
-      defaultValue: 0.0,
+      defaultValue: 'pending',
     },
-    timeTaken: {
+    numQuests: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      defaultValue: 0,
+    },
+    numRightAns: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    totalScore: {
+      type: DataTypes.FLOAT,
+      allowNull: false,
+      defaultValue: -1.0,
+    },
+    timeTaken: {
+      type: DataTypes.FLOAT,
+      allowNull: true,
     },
     submittedAt: {
       type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
+      allowNull: true
     },
   }, {
     modelName: 'Submission',
     tableName: 'Submission',
     timestamps: true,
+    hooks: {
+      beforeCreate: async (instance, options) => {
+        const test = await sequelize.models.Test.findByPk(instance.testID);
+        if (test) {
+          instance.numQuests = test.numQuests;
+        }
+      },
+      beforeUpdate: (instance, options) => {
+        if (instance.status === 'submitted' && instance.changed('status') && !instance.submittedAt) {
+          instance.submittedAt = new Date();
+        }
+      },
+    },
   });
 
   return Submission;

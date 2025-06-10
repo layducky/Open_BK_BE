@@ -10,7 +10,14 @@ const UnitController = {
 
             const course = await Course.findByPk(courseID);
             if (!course) return res.status(404).json({ error: 'Course not found' });
-            
+
+            const existingUnit = await Unit.findOne({
+                where: { courseID, numericalOrder }
+            });
+            if (existingUnit) {
+                return res.status(400).json({ error: 'Unit with the same numericalOrder already exists in this course' });
+            }
+
             const unitID = generateUnitID(courseID);
 
             const fieldsToCreate = filterNull({
@@ -30,6 +37,10 @@ const UnitController = {
     async getAllUnits(req, res) {
         try {
             const { courseID } = req.params;
+
+            const course = await Course.findByPk(courseID);
+            if (!course) return res.status(404).json({ error: 'Course not found' });
+
             const units = await Unit.findAll(
                 { where: { courseID } }
             );
@@ -43,6 +54,9 @@ const UnitController = {
     async getUnitByID(req, res) {
         try {
             const { unitID } = req.params;
+            
+            const course = await Course.findByPk(courseID);
+            if (!course) return res.status(404).json({ error: 'Course not found' });
 
             const unit = await Unit.findOne({
                 where: {
@@ -60,6 +74,10 @@ const UnitController = {
         try {
             const { unitID } = req.params;
             const { unitName, description } = req.body;
+            
+            const course = await Course.findByPk(courseID);
+            if (!course) return res.status(404).json({ error: 'Course not found' });
+            
             const updated = await Unit.update(
                 { unitName, description },
                 { where: { unitID } }

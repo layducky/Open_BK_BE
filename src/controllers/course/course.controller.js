@@ -90,7 +90,6 @@ const CourseController = {
   async deleteCourse (req, res) {
     try {
       const { courseID }  = req.params;
-      console.log(courseID);
       deleted = await Course.destroy({
         where:{
           courseID,

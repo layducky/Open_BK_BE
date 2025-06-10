@@ -15,7 +15,6 @@ const getUserInfo = async (req, res) => {
       if (!user) return res.status(404).json({ message: 'User not found' })
       return res.json(user)
    } catch (err) {
-      console.log(`${err}`)
       return res.status(500).json({ error: err.message })
    }
 }
@@ -139,7 +138,6 @@ const updateCollabPrivilege = async (req, res) => {
 const getAllCourseByUser = async (req, res) => {
    const id = req.user.id;
    try {
-      console.log(id)
       const userCourses = await User.findOne({
          where: { id: id },
          attributes: [],

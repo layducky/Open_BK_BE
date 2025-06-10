@@ -1,4 +1,3 @@
-const { Sequelize } = require("sequelize");
 
 module.exports = (sequelize, DataTypes) => {
 
@@ -23,25 +22,30 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    correctAnswer: {
-      type: DataTypes.ENUM('A', 'B', 'C', 'D'),
+    correctAns: {
+      type: DataTypes.ENUM('A', 'B', 'C', 'D','NULL'),
       allowNull: false,
+      defaultValue: 'NULL'
     },
-    answerA: {
+    ansA: {
       type: DataTypes.TEXT,
-      allowNull:false
+      allowNull:false,
+      defaultValue: ''
     },
-    answerB: {
-        type: DataTypes.TEXT,
-        allowNull:false
+    ansB: {
+      type: DataTypes.TEXT,
+      allowNull:false,
+      defaultValue: ''
     },
-    answerC: {
-        type: DataTypes.TEXT,
-        allowNull:false
+    ansC: {
+      type: DataTypes.TEXT,
+      allowNull:false,
+      defaultValue: ''
     },
-    answerD: {
-        type: DataTypes.TEXT,
-        allowNull:false
+    ansD: {
+      type: DataTypes.TEXT,
+      allowNull:false,
+      defaultValue: ''
     },
   }, {
     modelName: 'Question',

@@ -1,6 +1,6 @@
 const express = require('express');
-const CourseController = require('../../controllers/course/course.controller');
-const { verifyJWT } = require('../../middleware/verifyJWT');
+const CourseController = require('../../../controllers/course/course.controller');
+const { verifyJWT } = require('../../../middleware/verifyJWT');
 
 const router = express.Router();
 

@@ -1,9 +1,10 @@
 
 module.exports = (sequelize, DataTypes) => {
-  const quesAnswer = sequelize.define('quesAnswer', {
-    quesAnswerID: {
+  const quesAns = sequelize.define('quesAns', {
+    quesAnsID: {
       type: DataTypes.UUID,
       primaryKey: true,
+      defaultValue: DataTypes.UUIDV4
     },
     submissionID: {
       type: DataTypes.UUID,
@@ -21,19 +22,20 @@ module.exports = (sequelize, DataTypes) => {
         key: 'questionID',
       },
     },
-    selectedAnswer: {
-      type: DataTypes.ENUM('A', 'B', 'C', 'D'),
+    selectedAns: {
+      type: DataTypes.ENUM('A', 'B', 'C', 'D', 'NULL'),
       allowNull: false,
+      defaultValue: 'NULL'
     },
     isCorrect: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
+      default: false
     },
   }, {
-    tableName: 'quesAnswer',
-    modelName: 'quesAnswer',
-    timestamps: true,
+    tableName: 'quesAns',
+    modelName: 'quesAns',
   });
 
-  return quesAnswer;
+  return quesAns;
 };

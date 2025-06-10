@@ -29,23 +29,23 @@ module.exports = (sequelize, DataTypes) => {
          },
          allowNull: false
       },
-      correctAnswer: {
+      correctAns: {
          type: DataTypes.ENUM('A', 'B', 'C', 'D'),
          allowNull: false,
       },
-      answerA: {
+      ansA: {
          type: DataTypes.TEXT,
          allowNull:false
       },
-      answerB: {
+      ansB: {
          type: DataTypes.TEXT,
          allowNull:false
       },
-      answerC: {
+      ansC: {
          type: DataTypes.TEXT,
          allowNull:false
       },
-      answerD: {
+      ansD: {
          type: DataTypes.TEXT,
          allowNull:false
       },

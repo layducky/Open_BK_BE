@@ -35,9 +35,8 @@ const Preview = PreviewModel(sequelize, DataTypes);
 const Test = TestModel(sequelize, DataTypes);
 const Question = QuestionModel(sequelize, DataTypes);
 const Submission = submissionModel(sequelize, DataTypes);
-const QuesAnswer = quesAnswerModel(sequelize, DataTypes);
+const QuesAns = quesAnswerModel(sequelize, DataTypes);
 
-// User - Course
 User.belongsToMany(Course, {
   through: Participate,
   foreignKey: 'learnerID',
@@ -47,8 +46,8 @@ User.hasMany(Course, {
   foreignKey: 'authorID',
   as: 'authorInfo',
 });
+User.hasMany(Submission, { foreignKey: 'studentID', as: 'userInfo' })
 
-// Course - User
 Course.hasMany(Unit, { foreignKey: 'courseID', as: 'course_units' });
 Course.hasOne(Preview, { foreignKey: 'courseID', as: 'preview' });
 Course.belongsToMany(User, {
@@ -62,32 +61,32 @@ Course.belongsTo(User, {
   onDelete: 'CASCADE',
 });
 
-// Unit - Course, Question
 Unit.belongsTo(Course, { foreignKey: 'courseID', as: 'course_units', onDelete: 'CASCADE' });
 Unit.hasMany(Test, { foreignKey: 'unitID', as: 'unit_questions' });
 
-// Test - Course, User
 Test.belongsTo(Unit, { foreignKey: 'unitID', as: 'unit' });
 Test.hasMany(Question, { foreignKey: 'testID', as: 'test_questions' });
 
-// Question - Unit
 Question.belongsTo(Test, {
   foreignKey: 'testID',
   as: 'test_questions',
   onDelete: 'CASCADE',
 });
+Question.hasMany(QuesAns, { foreignKey: 'questionID', as: 'questionInfo'})
 
 
+Submission.belongsTo(User, { foreignKey: 'studentID', as: 'userInfo'});
+Submission.hasMany(QuesAns, { foreignKey: 'submissionID', as: 'quesAns'});
 
-// Comment - User
+QuesAns.belongsTo(Question, { foreignKey: 'questionID', as: 'questionInfo', onDelete: 'CASCADE'});
+
+
 Comment.belongsTo(User, {
   foreignKey: 'userID',
 });
 
-// Preview - Course
 Preview.belongsTo(Course, { foreignKey: 'courseID', as: 'course' });
 
-// Participate - User, Course
 Participate.belongsTo(User, {
   foreignKey: 'learnerID',
   as: 'learnerInfo',
@@ -121,6 +120,8 @@ module.exports = {
   Preview,
   Participate,
   Test,
+  Submission,
+  QuesAns,
   Material,
   ContQuestion,
 };

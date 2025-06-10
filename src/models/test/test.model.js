@@ -23,7 +23,7 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.TEXT,
             allowNull: true,
         },
-        numberOfQuestions: {
+        numQuests: {
             type: DataTypes.INTEGER,
             defaultValue: 0,
             allowNull: false,

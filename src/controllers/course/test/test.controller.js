@@ -15,13 +15,6 @@ const TestController = {
             if (!unit) return res.status(404).json({ error: 'Course not found' });
             
             const testID = generateTestID();
-            console.log ({
-                testID,
-                unitID,
-                testName,
-                description,
-                duration
-            });
             const test = await Test.create({
                 testID,
                 unitID,

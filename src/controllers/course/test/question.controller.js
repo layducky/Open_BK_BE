@@ -1,4 +1,4 @@
-const { Unit, Question } = require('../../../sequelize');
+const { Test, Question } = require('../../../sequelize');
 const { generateQuestionID } = require('../../../utils/generateID');
 const {filterNull, checkNull} = require('../../../common/ultis');
 
@@ -8,11 +8,11 @@ const QuestionController = {
         try {
             const { testID } = req.params;
 
-            const { numericalOrder, content, explanation, correctAnswer, answerA, answerB, answerC, answerD } = req.body;
-            if(checkNull({ numericalOrder, content, answerA, answerB, answerC, answerD })) return res.status(400).json({message: 'Bad request, some fields are missing'})
+            const { numericalOrder, content, explanation, correctAns, ansA, ansB, ansC, ansD } = req.body;
+            if(checkNull({ numericalOrder, content, ansA, ansB, ansC, ansD })) return res.status(400).json({message: 'Bad request, some fields are missing'})
 
-            const unit = await Unit.findByPk(testID);
-            if (!unit) return res.status(404).json({ error: 'Unit not found' });
+            const test = await Test.findByPk(testID);
+            if (!test) return res.status(404).json({ error: 'Test not found' });
 
             const questionID = generateQuestionID(testID);
             const filterCreate = filterNull({ 
@@ -21,15 +21,15 @@ const QuestionController = {
                 numericalOrder, 
                 content, 
                 explanation, 
-                correctAnswer, 
-                answerA, 
-                answerB, 
-                answerC, 
-                answerD 
+                correctAns, 
+                ansA, 
+                ansB, 
+                ansC, 
+                ansD 
             });
             
             await Question.create(filterCreate);
-            await Unit.increment('numberOfQuestions', {where: { unitID }});
+            await Test.increment('numQuests', {where: { testID }});
             res.status(201).json({ questionID, message:'Created question successfully'});
 
         } catch (error) {
@@ -40,12 +40,12 @@ const QuestionController = {
     async getAllQuestions(req, res) {
         try {
             const { testID } = req.params;
-            const unit = await Unit.findOne({
+            const test = await Test.findOne({
                 where: {
                     testID
                 }
             });
-            if (!unit) return res.status(404).json({ error: 'Unit not found' });
+            if (!test) return res.status(404).json({ error: 'Test not found' });
             const questions = await Question.findAll(
                 { where: { testID } }
             );
@@ -72,8 +72,8 @@ const QuestionController = {
     async updateQuestion(req, res) {
         try {
             const { questionID } = req.params;
-            const { content, explanation, correctAnswer, answerA, answerB, answerC, answerD } = req.body;
-            const params = filterNull({ content, explanation, correctAnswer, answerA, answerB, answerC, answerD })
+            const { content, explanation, correctAns, ansA, ansB, ansC, ansD } = req.body;
+            const params = filterNull({ content, explanation, correctAns, ansA, ansB, ansC, ansD })
             
             const updated = await Question.update(
                 params,
@@ -95,11 +95,11 @@ const QuestionController = {
             const question = await Question.findByPk(questionID);
             if (!question) return res.status(404).json({ error: 'Question not found' });
 
-            const unit = await Unit.findByPk(question.unitID);
-            if (!unit) return res.status(404).json({ error: 'Unit not found' });
+            const test = await Test.findByPk(question.testID);
+            if (!test) return res.status(404).json({ error: 'Test not found' });
 
             await Question.destroy({ where: { questionID } });
-            await Unit.decrement('numberOfQuestions', {where: { unitID: question.unitID }});
+            await Test.decrement('numQuests', {where: { testID: question.testID }});
             res.status(200).json({ message: 'Question deleted successfully' });
 
         } catch (error) {

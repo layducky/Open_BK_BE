@@ -5,9 +5,9 @@ const { contQuestion } = require('../../sequelize')
 const uploadQuestion = async(req, res) => {
    try {
       const { userID } = req.user.id
-      const { content, explanation, courseID, correctAnswer, answerA, answerB, answerC, answerD} = req.body
-      if (checkNull({ content, courseID, correctAnswer, answerA, answerB, answerC, answerD})) return res.status(400).json({message: 'Missing parameter'})
-      await contQuestion.create({userID, content, explanation, courseID, correctAnswer, answerA, answerB, answerC, answerD})
+      const { content, explanation, courseID, correctAns, ansA, ansB, ansC, ansD} = req.body
+      if (checkNull({ content, courseID, correctAns, ansA, ansB, ansC, ansD})) return res.status(400).json({message: 'Missing parameter'})
+      await contQuestion.create({userID, content, explanation, courseID, correctAns, ansA, ansB, ansC, ansD})
       return res.status(201).json({message: 'Send contribute question successfully'})
    
    }catch (error) {
