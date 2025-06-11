@@ -23,7 +23,7 @@ const signUp = async (req, res) => {
       const accessToken = jwt.sign(
          { name: newUser.name, id: newUser.id, role: newUser.role },
          process.env.ACCESS_TOKEN_SECRET,
-         { expiresIn: '1d' }
+         { expiresIn: '1h' }
       )
 
       // const refreshToken = jwt.sign(
@@ -32,19 +32,19 @@ const signUp = async (req, res) => {
       //    { expiresIn: '1d' }
       // )
 
-      res.cookie('accessToken', accessToken, {
-         httpOnly: true,
-         secure: true,
-         maxAge: 24 * 60 * 60 * 1000,
-         sameSite: 'Lax',
-         partitioned: true
-      })
+      // res.cookie('accessToken', accessToken, {
+      //    httpOnly: true,
+      //    secure: true,
+      //    maxAge: 24 * 60 * 60 * 1000,
+      //    sameSite: 'Lax',
+      //    partitioned: true
+      // })
 
       // store refresh token in cookies
       // res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 })
       // pass accessToken to frontend (client-side) for later API calls
       const role = "LEARNER"
-      res.status(200).json({userID, role, message: 'Register successfully!'})
+      res.status(200).json({userID, role, accessToken, message: 'Register successfully!'})
 
    } catch (err) {
       res.status(500).json({ err: 'Error during registration', details: err.message })
@@ -65,7 +65,7 @@ const logIn = async (req, res) => {
       const accessToken = jwt.sign(
          { "username": existUser.name, "userID": existUser.userID, "userRole": existUser.role },
          process.env.ACCESS_TOKEN_SECRET,
-         { expiresIn: '1d' }
+         { expiresIn: '1h' }
       )
    
       // const refreshToken = jwt.sign(
@@ -74,19 +74,18 @@ const logIn = async (req, res) => {
       //    { expiresIn: '1d' }
       // )
 
-      res.cookie('accessToken', accessToken, {
-         httpOnly: true,   
-         secure: true,
-         maxAge: 24 * 60 * 60 * 1000,
-         sameSite: 'Lax',
-         partitioned: true
-      })
-      // store refresh token in cookies
-      // res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 })
-      // pass accessToken to frontend (client-side) for later API calls
+      // res.cookie('accessToken', accessToken, {
+      //    httpOnly: true,   
+      //    secure: true,
+      //    maxAge: 24 * 60 * 60 * 1000,
+      //    sameSite: 'Lax',
+      //    partitioned: true
+      // })
+
+      
       const userID = existUser.userID
       const role = existUser.role
-      res.status(200).json({ userID, role, message: 'Login successfully!' })
+      res.status(200).json({ userID, role, accessToken, message: 'Login successfully!' })
 
    } catch (err) {
       return res.status(500).json({ err: 'Error during login', details: err.message })
