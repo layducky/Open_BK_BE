@@ -5,7 +5,9 @@ const { User } = require('../sequelize');
 // Verify JWT middleware
 const verifyJWT = (allowedRoles) => {
    return async (req, res, next) => {
-      const token = req.cookies.accessToken;
+      // const token = req.cookies.accessToken;
+      const authHeader = req.headers['authorization'];
+      const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
       if (!token) {
          return res.status(401).json({ message: 'Unauthorized, please log in' });
       }

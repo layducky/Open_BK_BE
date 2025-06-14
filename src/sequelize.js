@@ -14,11 +14,12 @@ const QuestionModel = require("./models/test/question.model");
 const submissionModel = require("./models/test/submission.model");
 const quesAnswerModel = require("./models/test/quesAns.model");
 
-// pg.defaults.ssl = true;  
+pg.defaults.ssl = process.env.SSL || false;
+DB_DIALECT = process.env.DB_DIALECT || 'postgres';
 const sequelize = new Sequelize(
   process.env.DB_URL,
   {
-    dialect: process.env.DB_DIALECT || 'postgres',
+    dialect: DB_DIALECT ,
     logging: false,
   }
 );

@@ -61,7 +61,7 @@ const logIn = async (req, res) => {
 
       const isPasswordCorrect = await bcrypt.compare(password, existUser.password)
       if (!isPasswordCorrect) return res.status(404).json({ message: 'Password is incorrect' })
-
+      
       const accessToken = jwt.sign(
          { "username": existUser.name, "userID": existUser.userID, "userRole": existUser.role },
          process.env.ACCESS_TOKEN_SECRET,
