@@ -4,14 +4,13 @@ const UserModel = require("./models/user.model");
 const CourseModel = require("./models/course.model");
 const UnitModel = require("./models/unit.model");
 const CommentModel = require("./models/comment.model");
-const ContQuestionModel = require("./models/contQuestion.model");
-const MaterialModel = require("./models/material.model");
 const ParticipateModel = require("./models/participate.model");
 const PreviewModel = require("./models/preview.model");
 
 const TestModel = require("./models/test/test.model");
 const QuestionModel = require("./models/test/question.model");
-const submissionModel = require("./models/test/submission.model");
+const UserTestModel = require("./models/test/userTest.model");
+const SubmissionModel = require("./models/test/submission.model");
 const quesAnswerModel = require("./models/test/quesAns.model");
 
 pg.defaults.ssl = process.env.SSL || false;
@@ -28,14 +27,13 @@ const User = UserModel(sequelize, DataTypes);
 const Course = CourseModel(sequelize, DataTypes);
 const Unit = UnitModel(sequelize, DataTypes);
 const Comment = CommentModel(sequelize, DataTypes);
-const ContQuestion = ContQuestionModel(sequelize, DataTypes);
-const Material = MaterialModel(sequelize, DataTypes);
 const Participate = ParticipateModel(sequelize, DataTypes);
 const Preview = PreviewModel(sequelize, DataTypes);
 
 const Test = TestModel(sequelize, DataTypes);
 const Question = QuestionModel(sequelize, DataTypes);
-const Submission = submissionModel(sequelize, DataTypes);
+const UserTest = UserTestModel(sequelize, DataTypes);
+const Submission = SubmissionModel(sequelize, DataTypes);
 const QuesAns = quesAnswerModel(sequelize, DataTypes);
 
 User.belongsToMany(Course, {
@@ -66,8 +64,9 @@ Unit.belongsTo(Course, { foreignKey: 'courseID', as: 'course_units', onDelete: '
 Unit.hasMany(Test, { foreignKey: 'unitID', as: 'unit_tests' });
 
 Test.belongsTo(Unit, { foreignKey: 'unitID', as: 'unit_tests' });
+Test.hasMany(UserTest, { foreignKey: 'testID', as: 'user_tests' });
 Test.hasMany(Question, { foreignKey: 'testID', as: 'test_questions' });
-Test.hasMany(Submission, { foreignKey: 'testID', as: 'test_submissions' });
+
 
 Question.belongsTo(Test, {
   foreignKey: 'testID',
@@ -76,9 +75,10 @@ Question.belongsTo(Test, {
 });
 Question.hasMany(QuesAns, { foreignKey: 'questionID', as: 'questionInfo'})
 
+UserTest.belongsTo(Test, { foreignKey: 'testID', as: 'user_tests', onDelete: 'CASCADE' });
+UserTest.hasMany(Submission, { foreignKey: 'testID', as: 'userTest_submissions' });
 
-Submission.belongsTo(User, { foreignKey: 'studentID', as: 'user_submissions'});
-Submission.belongsTo(Test, { foreignKey: 'testID', as: 'test_submissions'});
+Submission.belongsTo(UserTest, { foreignKey: 'testID', as: 'userTest_submissions', onDelete: 'CASCADE'});
 Submission.hasMany(QuesAns, { foreignKey: 'submissionID', as: 'quesAns'});
 
 QuesAns.belongsTo(Question, { foreignKey: 'questionID', as: 'questionInfo', onDelete: 'CASCADE'});
@@ -123,8 +123,7 @@ module.exports = {
   Preview,
   Participate,
   Test,
+  UserTest,
   Submission,
   QuesAns,
-  Material,
-  ContQuestion,
 };

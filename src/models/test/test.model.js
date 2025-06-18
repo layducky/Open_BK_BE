@@ -36,7 +36,6 @@ module.exports = (sequelize, DataTypes) => {
         duration: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            comment: 'Duration in minutes',
         },
     }, {
         modelName: 'Test',

@@ -31,16 +31,6 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 'pending',
     },
-    numQuests: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 0,
-    },
-    duration: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: '15',
-    },
     numRightAns: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -64,13 +54,6 @@ module.exports = (sequelize, DataTypes) => {
     tableName: 'Submission',
     timestamps: true,
     hooks: {
-      beforeCreate: async (instance, options) => {
-        const test = await sequelize.models.Test.findByPk(instance.testID);
-        if (test) {
-          instance.numQuests = test.numQuests;
-          instance.duration = test.duration;
-        }
-      },
       beforeUpdate: (instance, options) => {
         if (instance.status === 'submitted' && instance.changed('status') && !instance.submittedAt) {
           instance.submittedAt = new Date();
