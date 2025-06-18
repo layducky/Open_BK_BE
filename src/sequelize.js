@@ -47,7 +47,7 @@ User.hasMany(Course, {
   foreignKey: 'authorID',
   as: 'authorInfo',
 });
-User.hasMany(Submission, { foreignKey: 'studentID', as: 'userInfo' })
+User.hasMany(Submission, { foreignKey: 'studentID', as: 'user_submissions' })
 
 Course.hasMany(Unit, { foreignKey: 'courseID', as: 'course_units' });
 Course.hasOne(Preview, { foreignKey: 'courseID', as: 'preview' });
@@ -63,10 +63,11 @@ Course.belongsTo(User, {
 });
 
 Unit.belongsTo(Course, { foreignKey: 'courseID', as: 'course_units', onDelete: 'CASCADE' });
-Unit.hasMany(Test, { foreignKey: 'unitID', as: 'unit_questions' });
+Unit.hasMany(Test, { foreignKey: 'unitID', as: 'unit_tests' });
 
-Test.belongsTo(Unit, { foreignKey: 'unitID', as: 'unit' });
+Test.belongsTo(Unit, { foreignKey: 'unitID', as: 'unit_tests' });
 Test.hasMany(Question, { foreignKey: 'testID', as: 'test_questions' });
+Test.hasMany(Submission, { foreignKey: 'testID', as: 'test_submissions' });
 
 Question.belongsTo(Test, {
   foreignKey: 'testID',
@@ -76,7 +77,8 @@ Question.belongsTo(Test, {
 Question.hasMany(QuesAns, { foreignKey: 'questionID', as: 'questionInfo'})
 
 
-Submission.belongsTo(User, { foreignKey: 'studentID', as: 'userInfo'});
+Submission.belongsTo(User, { foreignKey: 'studentID', as: 'user_submissions'});
+Submission.belongsTo(Test, { foreignKey: 'testID', as: 'test_submissions'});
 Submission.hasMany(QuesAns, { foreignKey: 'submissionID', as: 'quesAns'});
 
 QuesAns.belongsTo(Question, { foreignKey: 'questionID', as: 'questionInfo', onDelete: 'CASCADE'});

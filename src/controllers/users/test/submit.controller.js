@@ -12,9 +12,28 @@ const SubmitController = {
                 return res.status(404).json({ message: 'Test not found' });
             }
 
+            const latestSubmission = await Submission.findOne({
+                where: {
+                    testID,
+                    studentID: userID,
+                },
+                order: [['numericalOrder', 'DESC']],
+            });
+            if (latestSubmission && latestSubmission.status === 'pending') {
+                return res.status(400).json({
+                    message: 'You already have a pending submission. Please finish it before starting a new one.',
+                });
+            }
+
+            const maxOrder = await Test.max('numericalOrder', {
+                where: { testID }
+            });
+            const numericalOrder = (maxOrder || 0) + 1;
+
             const fieldsToCreate = filterNull({
                 testID,
                 studentID: userID,
+                numericalOrder,
             });
 
             const submit = await Submission.create(fieldsToCreate);

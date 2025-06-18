@@ -1,4 +1,4 @@
-const { Test, Unit } = require('../../../sequelize');
+const { Test, Unit, Submission } = require('../../../sequelize');
 const { generateTestID } = require('../../../utils/generateID');
 
 const TestController = {
@@ -12,13 +12,19 @@ const TestController = {
             }
             
             const unit = await Unit.findByPk(unitID);
-            if (!unit) return res.status(404).json({ error: 'Course not found' });
+            if (!unit) return res.status(404).json({ error: 'Unit not found' });
+
+            const maxOrder = await Test.max('numericalOrder', {
+                where: { unitID }
+            });
+            const numericalOrder = (maxOrder || 0) + 1;
             
             const testID = generateTestID();
             const test = await Test.create({
                 testID,
                 unitID,
                 testName,
+                numericalOrder,
                 description,
                 duration
             });
@@ -32,7 +38,13 @@ const TestController = {
         try {
             const { testID } = req.params;
 
-            const test = await Test.findByPk(testID);
+            const test = await Test.findByPk(testID,  {
+                include: [{
+                    model: Submission,
+                    as: 'test_submissions',
+                    required: false
+                }]
+            });
             if (!test) return res.status(404).json({ error: 'Test not found' });
             res.status(200).json(test);
         } catch (error) {

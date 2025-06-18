@@ -21,20 +21,25 @@ module.exports = (sequelize, DataTypes) => {
         key: 'userID',
       },
     },
+    numericalOrder: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      unique: true,
+    },
     status: {
       type: DataTypes.ENUM('pending', 'submitted', 'graded'),
       allowNull: false,
       defaultValue: 'pending',
     },
-    duration: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      comment: 'Duration in minutes',
-    },
     numQuests: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
+    },
+    duration: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: '15',
     },
     numRightAns: {
       type: DataTypes.INTEGER,

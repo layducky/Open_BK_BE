@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const { generateLearnerID } = require('../../utils/generateID')
 
-
+const accessTokenLifeTime = process.env.ACCESS_TOKEN_LIFETIME || '1d';
 // sign up
 const signUp = async (req, res) => {
    try {
@@ -23,7 +23,7 @@ const signUp = async (req, res) => {
       const accessToken = jwt.sign(
          { name: newUser.name, id: newUser.id, role: newUser.role },
          process.env.ACCESS_TOKEN_SECRET,
-         { expiresIn: '1h' }
+         { expiresIn: accessTokenLifeTime }
       )
 
       // const refreshToken = jwt.sign(
@@ -65,7 +65,7 @@ const logIn = async (req, res) => {
       const accessToken = jwt.sign(
          { "username": existUser.name, "userID": existUser.userID, "userRole": existUser.role },
          process.env.ACCESS_TOKEN_SECRET,
-         { expiresIn: '1h' }
+         { expiresIn: accessTokenLifeTime }
       )
    
       // const refreshToken = jwt.sign(

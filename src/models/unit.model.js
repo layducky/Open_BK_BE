@@ -15,7 +15,9 @@ module.exports = (sequelize, DataTypes) => {
     numericalOrder: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      unique: true,
     },
+
     unitName: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -27,11 +29,6 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     modelName: 'Unit',
     tableName: 'Unit',
-    indexes: [{
-      unique: true,
-      fields: ['courseID', 'numericalOrder'],
-      msg: 'Unit with this order already exists.',
-    }],
     timestamps: true,
   });
 };

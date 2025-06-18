@@ -1,4 +1,4 @@
-const { Unit, Course } = require('../../sequelize');
+const { Unit, Course, Test } = require('../../sequelize');
 const { generateUnitID } = require('../../utils/generateID');
 const {filterNull, checkNull} = require('../../common/ultis');
 
@@ -6,26 +6,24 @@ const UnitController = {
     async createUnit(req, res) {
         try {
             const { courseID } = req.params;
-            const { numericalOrder, unitName, description } = req.body;
+            const { unitName, description } = req.body;
 
             const course = await Course.findByPk(courseID);
             if (!course) return res.status(404).json({ error: 'Course not found' });
 
-            const existingUnit = await Unit.findOne({
-                where: { courseID, numericalOrder }
-            });
-            if (existingUnit) {
-                return res.status(400).json({ error: 'Unit with the same numericalOrder already exists in this course' });
-            }
-
             const unitID = generateUnitID(courseID);
+            const maxOrder = await Unit.max('numericalOrder', {
+                where: { courseID }
+            });
+            const numericalOrder = (maxOrder || 0) + 1;
+
 
             const fieldsToCreate = filterNull({
                 unitID,
                 courseID,
-                numericalOrder,
                 unitName,
-                description
+                description,
+                numericalOrder,
             });
             await Unit.create(fieldsToCreate);
             return res.status(201).json({ unitID, message: 'Created unit successfully' });
@@ -41,9 +39,16 @@ const UnitController = {
             const course = await Course.findByPk(courseID);
             if (!course) return res.status(404).json({ error: 'Course not found' });
 
-            const units = await Unit.findAll(
-                { where: { courseID } }
-            );
+            const units = await Unit.findAll({
+                where: { courseID },
+                include: [
+                    {
+                        model: Test,
+                        as: 'unit_tests',
+                        attributes: ['testID', 'testName', 'numQuests', 'duration'],
+                    },
+                ],
+            });
             return res.status(200).json(units);
 
         } catch (error) {
