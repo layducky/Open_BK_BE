@@ -8,13 +8,18 @@ const QuestionController = {
         try {
             const { testID } = req.params;
 
-            const { numericalOrder, content, explanation, correctAns, ansA, ansB, ansC, ansD } = req.body;
-            if(checkNull({ numericalOrder, content, ansA, ansB, ansC, ansD })) return res.status(400).json({message: 'Bad request, some fields are missing'})
+            const { content, explanation, correctAns, ansA, ansB, ansC, ansD } = req.body;
+            if(checkNull({ content, ansA, ansB, ansC, ansD })) return res.status(400).json({message: 'Bad request, some fields are missing'})
 
             const test = await Test.findByPk(testID);
             if (!test) return res.status(404).json({ error: 'Test not found' });
 
             const questionID = generateQuestionID(testID);
+            const maxOrder = await Question.max('numericalOrder', {
+                where: { testID }
+            });
+            const numericalOrder = (maxOrder || 0) + 1;
+
             const filterCreate = filterNull({ 
                 questionID, 
                 testID,

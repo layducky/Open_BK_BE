@@ -1,5 +1,5 @@
 const express = require('express');
-const contentRoutes = require('./content')
+// const contentRoutes = require('./content')
 const collabRoutes = require('./collab');
 const publicRoutes = require('./public');
 const courseEnrollRoutes = require('./courseEnroll.route')

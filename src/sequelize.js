@@ -63,8 +63,9 @@ Course.belongsTo(User, {
 Unit.belongsTo(Course, { foreignKey: 'courseID', as: 'course_units', onDelete: 'CASCADE' });
 Unit.hasMany(Test, { foreignKey: 'unitID', as: 'unit_tests' });
 
-Test.belongsTo(Unit, { foreignKey: 'unitID', as: 'unit_tests' });
+Test.belongsTo(Unit, { foreignKey: 'unitID', as: 'unit_tests', onDelete: 'CASCADE' });
 Test.hasMany(UserTest, { foreignKey: 'testID', as: 'user_tests' });
+Test.hasMany(Submission, { foreignKey: 'testID', as: 'test_submissions' });
 Test.hasMany(Question, { foreignKey: 'testID', as: 'test_questions' });
 
 
@@ -78,11 +79,12 @@ Question.hasMany(QuesAns, { foreignKey: 'questionID', as: 'questionInfo'})
 UserTest.belongsTo(Test, { foreignKey: 'testID', as: 'user_tests', onDelete: 'CASCADE' });
 UserTest.hasMany(Submission, { foreignKey: 'testID', as: 'userTest_submissions' });
 
+Submission.belongsTo(Test, { foreignKey: 'testID', as: 'test_submissions'});
 Submission.belongsTo(UserTest, { foreignKey: 'testID', as: 'userTest_submissions', onDelete: 'CASCADE'});
 Submission.hasMany(QuesAns, { foreignKey: 'submissionID', as: 'quesAns'});
 
 QuesAns.belongsTo(Question, { foreignKey: 'questionID', as: 'questionInfo', onDelete: 'CASCADE'});
-
+QuesAns.belongsTo(Submission, { foreignKey: 'submissionID', as: 'quesAns', onDelete: 'CASCADE' });
 
 Comment.belongsTo(User, {
   foreignKey: 'userID',
@@ -115,6 +117,7 @@ Participate.belongsTo(Course, {
 })();
 
 module.exports = {
+  sequelize,
   User,
   Course,
   Unit,

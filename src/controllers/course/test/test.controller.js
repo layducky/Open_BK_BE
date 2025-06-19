@@ -1,25 +1,35 @@
-const { Test, Unit, Submission } = require('../../../sequelize');
+const { Test, Unit, Question, UserTest, Participate } = require('../../../sequelize');
 const { generateTestID } = require('../../../utils/generateID');
+const { sequelize } = require('../../../sequelize');
 
 const TestController = {
     async createTest(req, res) {
+        const t = await sequelize.transaction(); 
         try {
             const { unitID } = req.params;
             const { testName, description, duration } = req.body;
 
             if (!testName || !description || !duration) {
+                await t.rollback();
                 return res.status(400).json({ message: 'Bad request, some fields are missing' });
             }
             
-            const unit = await Unit.findByPk(unitID);
-            if (!unit) return res.status(404).json({ error: 'Unit not found' });
+            const unit = await Unit.findByPk(unitID, { transaction: t });
+            if (!unit){
+                await t.rollback();
+                return res.status(404).json({ error: 'Unit not found' });
+            }
+
+            const courseID = unit.courseID;
 
             const maxOrder = await Test.max('numericalOrder', {
-                where: { unitID }
+                where: { unitID },
+                transaction: t,
             });
-            const numericalOrder = (maxOrder || 0) + 1;
-            
+
+            const numericalOrder = (maxOrder || 0) + 1;            
             const testID = generateTestID();
+
             const test = await Test.create({
                 testID,
                 unitID,
@@ -27,8 +37,28 @@ const TestController = {
                 numericalOrder,
                 description,
                 duration
+            }, {transaction: t});
+
+
+            const learners = await Participate.findAll({
+                where: { courseID },
+                attributes: ['learnerID'],
+                transaction: t,
             });
 
+            if (learners.length > 0) {
+                const userTests = learners.map(l => ({
+                    userID: l.learnerID,
+                    testID,
+                }));
+
+                await UserTest.bulkCreate(userTests, {
+                    transaction: t,
+                    ignoreDuplicates: true,
+                });
+            }
+
+            await t.commit();
             res.status(201).json({ testID: test.testID, message: 'Created test successfully' });
         } catch (error) {
             res.status(500).json({ error: error.message });
@@ -40,9 +70,8 @@ const TestController = {
 
             const test = await Test.findByPk(testID,  {
                 include: [{
-                    model: Submission,
-                    as: 'test_submissions',
-                    required: false
+                    model: Question,
+                    as: 'test_questions',
                 }]
             });
             if (!test) return res.status(404).json({ error: 'Test not found' });

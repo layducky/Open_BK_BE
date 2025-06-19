@@ -1,119 +1,166 @@
-const { Question, Test, Submission, QuesAns } = require('../../../sequelize');
+const { Submission, UserTest, Question, Test, QuesAns, sequelize } = require('../../../sequelize');
 const { filterNull, checkNull } = require('../../../common/ultis');
 
 const SubmitController = {
     async createSubmit(req, res) {
+    const t = await sequelize.transaction();
         try {
-            const { testID } = req.params;
+            const { userTestID } = req.params;
             const { userID } = req.user;
 
-            const test = await Test.findOne({ where: { testID } });
-            if (!test) {
-                return res.status(404).json({ message: 'Test not found' });
+            const userTest = await UserTest.findOne({
+                where: { userTestID },
+                attributes: ['testID', 'userTestID'],
+                transaction: t,
+            });
+
+            if (!userTest) {
+                await t.rollback();
+                return res.status(404).json({ message: 'UserTest not found' });
             }
 
+            const { testID } = userTest;
+
             const latestSubmission = await Submission.findOne({
-                where: {
-                    testID,
-                    studentID: userID,
-                },
+                where: { userTestID },
                 order: [['numericalOrder', 'DESC']],
+                transaction: t,
             });
-            if (latestSubmission && latestSubmission.status === 'pending') {
+
+            if (latestSubmission?.status === 'pending') {
+                await t.rollback();
                 return res.status(400).json({
                     message: 'You already have a pending submission. Please finish it before starting a new one.',
                 });
             }
 
-            const maxOrder = await Test.max('numericalOrder', {
-                where: { testID }
+            const maxOrder = await Submission.max('numericalOrder', {
+                where: { userTestID },
+                transaction: t,
             });
+
             const numericalOrder = (maxOrder || 0) + 1;
 
-            const fieldsToCreate = filterNull({
+            const fieldsToCreate = {
+                userTestID,
                 testID,
                 studentID: userID,
                 numericalOrder,
+            };
+
+            const submit = await Submission.create(fieldsToCreate, { transaction: t });
+
+            if (!submit) {
+                await t.rollback();
+                return res.status(500).json({ message: 'Failed to create submission' });
+            }
+
+            await t.commit();
+
+            return res.status(201).json({
+                submitID: submit.submissionID,
+                duration: submit.duration,
+                message: 'Examination start now!',
             });
 
-            const submit = await Submission.create(fieldsToCreate);
-            return res.status(201).json({ submitID: submit.submissionID, duration: submit.duration, message: 'Examination start now!' });
-
         } catch (error) {
+            await t.rollback();
             res.status(500).json({ error: error.message });
         }
     },
 
-    async updateSubmit (req, res) {
-        try{
+    async updateSubmit(req, res) {
+        const t = await sequelize.transaction();
+        try {
             const { submissionID } = req.params;
             const { status, submission } = req.body;
 
-            const submissionRecord = await Submission.findByPk(submissionID);
+            const submissionRecord = await Submission.findByPk(submissionID, {
+                include: {
+                    model: Test,
+                    as: 'test_submissions',
+                    attributes: ['numQuests'],
+                },
+                transaction: t
+            });
             if (!submissionRecord) {
+                await t.rollback();
                 return res.status(404).json({ message: 'Submission not found' });
             }
-            if (submissionRecord.status === "submitted" || submissionRecord.status === "graded") {
+
+            if (['submitted', 'graded'].includes(submissionRecord.status)) {
+                await t.rollback();
                 return res.status(400).json({ message: 'The test is completed and cannot be redone.' });
             }
-            if (checkNull(submission)) {
-                return res.status(400).json({ message: 'Submit failed, some fields are missing' });
-            }
-            if (!Array.isArray(submission) || !submission.every(item => item.questionID && item.selectedAns)) {
+
+            if (!submission || !Array.isArray(submission) || !submission.every(item => item.questionID && item.selectedAns)) {
+                await t.rollback();
                 return res.status(400).json({ message: 'Invalid submission data' });
             }
+
             const now = Date.now();
-            const deadline = (submissionRecord.createdAt + submissionRecord.duration * 60 *1000);
-            if (deadline < now){
+            const deadline = new Date(submissionRecord.createdAt).getTime() + submissionRecord.duration * 60 * 1000;
+            if (deadline < now) {
+                await t.rollback();
                 return res.status(403).json({ error: 'Deadline exceeded' });
             }
-            
-            // Already pass properly condition to save submission
-            const quesAnsPromises = submission.map(async item => {
-                const question = await Question.findByPk(item.questionID);
-                const isCorrect = question && question.correctAns === item.selectedAns;
 
+            const quesAnsPromises = submission.map(async item => {
+                const question = await Question.findByPk(item.questionID, { transaction: t });
+                const isCorrect = question?.correctAns === item.selectedAns;
                 await QuesAns.upsert({
-                    submissionID: submissionID,
+                    submissionID,
                     questionID: item.questionID,
                     selectedAns: item.selectedAns,
-                    isCorrect: isCorrect ? true : false,
-                });
+                    isCorrect,
+                }, { transaction: t });
 
                 return isCorrect ? 1 : 0;
             });
-
             const AnsList = await Promise.all(quesAnsPromises);
-            const numRightAns = AnsList.reduce((acc, isCorrect) => acc + isCorrect, 0);
-            const totalScore = (numRightAns / submissionRecord.numQuests) * 100;
+            const numRightAns = AnsList.reduce((sum, correct) => sum + correct, 0);
+            const totalScore = (numRightAns / submissionRecord.test_submissions.numQuests) * 100;
             
-            // If the test is finished, caculate score and close em
+            console.log(totalScore, submissionRecord.test_submissions.numQuests);
+
             if (status === "submitted") {
                 const submittedAt = new Date();
-                const timeTaken = (submittedAt - submissionRecord.createdAt) / 1000 / 60;
+                const timeTaken = (submittedAt - new Date(submissionRecord.createdAt)) / 60000;
 
-                await submissionRecord.update({ submittedAt, timeTaken, numRightAns, totalScore });
-                await submissionRecord.update({ status });
+                await submissionRecord.update({
+                    status,
+                    submittedAt,
+                    timeTaken,
+                    numRightAns,
+                    totalScore,
+                }, { transaction: t });
             }
 
+            await t.commit();
             return res.status(200).json({ message: 'Submission updated successfully!' });
+
         } catch (error) {
+            await t.rollback();
             res.status(500).json({ error: error.message });
         }
     },
 
+
     async getAllSubmissionOnTest (req, res) {
         try {
-            const { testID } = req.params;
+            const { userTestID } = req.params;
 
-            const test = await Test.findOne({ where: { testID } });
+            const test = await UserTest.findOne({ where: { userTestID } });
             if (!test) {
-            return res.status(404).json({ message: 'Test not found' });
+                return res.status(404).json({ message: 'Test not found' });
             }
 
-            const submissions = await Submission.findAll({ where: { testID } });
+            const submissions = await Submission.findAll({
+                where: { userTestID },
+                attributes: { exclude: ['userTestID', 'studentID', 'testID', 'createdAt', 'updatedAt'] }
+            });
             if (!submissions.length) {
-            return res.status(404).json({ message: 'No submissions found for this test' });
+                return res.status(404).json({ message: 'No submissions found for this test' });
             }
 
             return res.status(200).json({ submissions });
@@ -122,20 +169,48 @@ const SubmitController = {
         }
     },
 
-    async deleteSubmitHistory  (req, res) {
+    async deleteSubmitHistory(req, res) {
+        const t = await sequelize.transaction();
         try {
             const { submissionID } = req.params;
 
-            const submission = await Submission.findByPk(submissionID);
+            const submission = await Submission.findByPk(submissionID, { transaction: t });
             if (!submission) {
-            return res.status(404).json({ message: 'Submission not found' });
+                await t.rollback();
+                return res.status(404).json({ message: 'Submission not found' });
             }
 
-            await QuesAns.destroy({ where: { submissionID } });
-            await submission.destroy();
+            await QuesAns.destroy({ where: { submissionID }, transaction: t });
+            await submission.destroy({ transaction: t });
 
+            await t.commit();
             return res.status(200).json({ message: 'Submission history deleted successfully!' });
         } catch (error) {
+            await t.rollback();
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    async deleteAllSubmitHistory(req, res) {
+        const t = await sequelize.transaction();
+        try {
+            const { userTestID } = req.params;
+
+            const submissions = await Submission.findAll({ where: { userTestID }, transaction: t });
+            if (!submissions.length) {
+                await t.rollback();
+                return res.status(404).json({ message: 'No submissions found for this test' });
+            }
+
+            const submissionIDs = submissions.map(sub => sub.submissionID);
+
+            await QuesAns.destroy({ where: { submissionID: submissionIDs }, transaction: t });
+            await Submission.destroy({ where: { userTestID }, transaction: t });
+
+            await t.commit();
+            return res.status(200).json({ message: 'All submission histories deleted successfully!' });
+        } catch (error) {
+            await t.rollback();
             res.status(500).json({ error: error.message });
         }
     }

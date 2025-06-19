@@ -2,7 +2,7 @@
     "sqltools.connections": [
         {
             "previewLimit": 50,
-            "server": "localhost",
+            "server": "{{base_url}}",
             "port": 5432,
             "driver": "PostgreSQL",
             "name": "opbk",

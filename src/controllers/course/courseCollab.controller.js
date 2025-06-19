@@ -1,6 +1,7 @@
 const { User, Course, Participate } = require('../../sequelize');
 const { generateCourseID } = require('../../utils/generateID');
 const {filterNull, checkNull} = require('../../common/ultis');
+const { sequelize } = require('../../sequelize');
 
 const CourseCollab = {
   async createCourse(req, res) {

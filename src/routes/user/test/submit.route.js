@@ -2,9 +2,10 @@ const express = require('express')
 const router = express.Router()
 const SubmitController = require('../../../controllers/users/test/submit.controller');
 
-router.post('/:testID', SubmitController.createSubmit);
+router.post('/:userTestID', SubmitController.createSubmit);
 router.put('/:submissionID', SubmitController.updateSubmit);
-router.get('/:testID', SubmitController.getAllSubmissionOnTest);
+router.get('/:userTestID', SubmitController.getAllSubmissionOnTest);
 router.delete('/:submissionID', SubmitController.deleteSubmitHistory);
+router.delete('/all/:userTestID', SubmitController.deleteAllSubmitHistory);
 
 module.exports = router
