@@ -13,23 +13,20 @@ const TestController = {
                 await t.rollback();
                 return res.status(400).json({ message: 'Bad request, some fields are missing' });
             }
-            
+            //Check unit exists
             const unit = await Unit.findByPk(unitID, { transaction: t });
             if (!unit){
                 await t.rollback();
                 return res.status(404).json({ error: 'Unit not found' });
             }
-
-            const courseID = unit.courseID;
-
+            //Create new numericalOrder for the test
             const maxOrder = await Test.max('numericalOrder', {
                 where: { unitID },
                 transaction: t,
             });
-
             const numericalOrder = (maxOrder || 0) + 1;            
             const testID = generateTestID();
-
+            //Create NEW TEST
             const test = await Test.create({
                 testID,
                 unitID,
@@ -38,7 +35,18 @@ const TestController = {
                 description,
                 duration
             }, {transaction: t});
-
+            
+            const courseID = unit.courseID;
+            const exist = await Participate.findOne({
+                where: { learnerID: req.user.userID, courseID },
+                transaction: t,
+            });
+            if (!exist) {
+                await Participate.create({
+                    learnerID: req.user.userID,
+                    courseID,
+                }, { transaction: t });
+            }
 
             const learners = await Participate.findAll({
                 where: { courseID },
@@ -51,7 +59,6 @@ const TestController = {
                     userID: l.learnerID,
                     testID,
                 }));
-
                 await UserTest.bulkCreate(userTests, {
                     transaction: t,
                     ignoreDuplicates: true,

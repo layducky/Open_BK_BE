@@ -23,10 +23,9 @@ module.exports = (sequelize, DataTypes) => {
             allowNull: false,
             defaultValue: 'allow',
         },
-        maxAttempts: {
-            type: DataTypes.INTEGER,
-            allowNull: false,
-            defaultValue: 99999,
+        score: {
+            type: DataTypes.FLOAT,
+            allowNull: true,
         },
     }, {
         modelName: 'UserTest',

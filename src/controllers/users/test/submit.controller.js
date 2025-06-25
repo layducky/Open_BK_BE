@@ -19,6 +19,8 @@ const SubmitController = {
                 return res.status(404).json({ message: 'UserTest not found' });
             }
 
+            await userTest.update({ status: 'continue' }, { transaction: t });
+
             const { testID } = userTest;
 
             const latestSubmission = await Submission.findOne({
@@ -55,10 +57,11 @@ const SubmitController = {
                 return res.status(500).json({ message: 'Failed to create submission' });
             }
 
+
             await t.commit();
 
             return res.status(201).json({
-                submitID: submit.submissionID,
+                submissionID: submit.submissionID,
                 duration: submit.duration,
                 message: 'Examination start now!',
             });
@@ -106,7 +109,17 @@ const SubmitController = {
             }
 
             const quesAnsPromises = submission.map(async item => {
-                const question = await Question.findByPk(item.questionID, { transaction: t });
+                const question = await Question.findOne({
+                    where: {
+                        questionID: item.questionID,
+                        testID: submissionRecord.testID,
+                    },
+                    transaction: t,
+                });
+                if (!question) {
+                    throw new Error(`Invalid questionID: ${item.questionID}`);
+                }
+
                 const isCorrect = question?.correctAns === item.selectedAns;
                 await QuesAns.upsert({
                     submissionID,
@@ -119,9 +132,8 @@ const SubmitController = {
             });
             const AnsList = await Promise.all(quesAnsPromises);
             const numRightAns = AnsList.reduce((sum, correct) => sum + correct, 0);
-            const totalScore = (numRightAns / submissionRecord.test_submissions.numQuests) * 100;
+            const totalScore = (numRightAns / submissionRecord.test_submissions.numQuests) * 100 || 0;
             
-            console.log(totalScore, submissionRecord.test_submissions.numQuests);
 
             if (status === "submitted") {
                 const submittedAt = new Date();
@@ -134,6 +146,11 @@ const SubmitController = {
                     numRightAns,
                     totalScore,
                 }, { transaction: t });
+
+                await UserTest.update(
+                    { status: 'allow' },
+                    { where: { userTestID: submissionRecord.userTestID }, transaction: t }
+                );
             }
 
             await t.commit();

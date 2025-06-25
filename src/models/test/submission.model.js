@@ -32,12 +32,11 @@ module.exports = (sequelize, DataTypes) => {
     numericalOrder: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      unique: true,
     },
     status: {
-      type: DataTypes.ENUM('pending', 'submitted', 'graded'),
+      type: DataTypes.ENUM('ongoing', 'submitted', 'graded', 'failed'),
       allowNull: false,
-      defaultValue: 'pending',
+      defaultValue: 'ongoing',
     },
     numRightAns: {
       type: DataTypes.INTEGER,
@@ -61,6 +60,13 @@ module.exports = (sequelize, DataTypes) => {
     modelName: 'Submission',
     tableName: 'Submission',
     timestamps: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ['userTestID', 'numericalOrder'],
+        name: 'unique_user_test_order'
+      }
+    ],
     hooks: {
       beforeUpdate: (instance, options) => {
         if (instance.status === 'submitted' && instance.changed('status') && !instance.submittedAt) {

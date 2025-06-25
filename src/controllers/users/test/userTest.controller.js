@@ -9,32 +9,42 @@ const UserTestController = {
 
             const userTest = await UserTest.findOne({
                 where: { userID, testID },
-                attributes: ['status', 'maxAttempts', 'userTestID'],
+                attributes: ['status', 'score', 'userTestID'],
                 transaction: t,
             });
 
             if (!userTest) {
                 await t.rollback();
-                return res.status(404).json({ message: 'UserTest not found' });
+                return res.status(404).json({ message: 'User not enroll this course' });
             }
 
             const [test, submissions] = await Promise.all([
                 Test.findOne({
                     where: { testID },
-                    attributes: ['duration', 'numQuests'],
+                    attributes: ['testName', 'maxAttempts','numericalOrder', 'duration', 'numQuests'],
                 }),
                 Submission.findAll({
                     where: { userTestID: userTest.userTestID },
+                    attributes: { exclude: ['userTestID', 'testID', 'studentID'] },
                 }),
             ]);
+
+            const lastSubmissionID = submissions.length > 0
+                ? submissions[submissions.length - 1].submissionID
+                : null;
 
             await t.commit();
 
             return res.status(200).json({
+                userTestID: userTest.userTestID,
+                testName: test ? test.testName : null,
+                numericalOrder: test ? test.numericalOrder : null,
                 status: userTest.status,
-                maxAttempts: userTest.maxAttempts,
+                maxAttempts: test ? test.maxAttempts : null,
+                totalScore: userTest.score,
                 duration: test ? test.duration : null,
                 numQuests: test ? test.numQuests : null,
+                lastSubmissionID,
                 submissions: submissions.map(s => s.toJSON()),
             });
 

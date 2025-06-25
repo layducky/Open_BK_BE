@@ -17,7 +17,6 @@ const UnitController = {
             });
             const numericalOrder = (maxOrder || 0) + 1;
 
-
             const fieldsToCreate = filterNull({
                 unitID,
                 courseID,
@@ -28,7 +27,7 @@ const UnitController = {
             await Unit.create(fieldsToCreate);
             return res.status(201).json({ unitID, message: 'Created unit successfully' });
         } catch (error) {
-            return res.status(500).json({ error: error.message });
+            return res.status(500).json({ error: error.name });
         }
     },
   

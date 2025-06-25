@@ -22,7 +22,6 @@ module.exports = (sequelize, DataTypes) => {
         numericalOrder: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            unique: true,
         },
         description: {
             type: DataTypes.TEXT,
@@ -37,8 +36,26 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,
             allowNull: false,
         },
+        maxAttempts: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 99999,
+        },
+        openDate: {
+            type: DataTypes.DATE,
+            allowNull: true,
+        },
+        closeDate: {
+            type: DataTypes.DATE,
+            allowNull: true,
+        },
     }, {
         modelName: 'Test',
         tableName: 'Test',
+        indexes: [{
+            unique: true,
+            fields: ['unitID', 'numericalOrder'],
+            name: 'unique_unit_test_order'
+        }]
     });
 };
