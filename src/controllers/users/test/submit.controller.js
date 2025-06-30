@@ -1,5 +1,5 @@
 const { Submission, UserTest, Question, Test, QuesAns, sequelize } = require('../../../sequelize');
-const { filterNull, checkNull } = require('../../../common/ultis');
+const { filterNull, checkNull } = require('../../../utils/checkNull');
 
 const SubmitController = {
     async createSubmit(req, res) {

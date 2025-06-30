@@ -18,10 +18,10 @@ const signUp = async (req, res) => {
 
       const hashpwd = await bcrypt.hash(password, 10)
 
-      const newUser = await User.create({ userID , name, email, password: hashpwd, imageUrl })
+      const newUser = await User.create({ userID , name, email, password: hashpwd, imageUrl, provider: 'credential'})
       // create access, refresh token
       const accessToken = jwt.sign(
-         { name: newUser.name, id: newUser.id, role: newUser.role },
+         { "username": newUser.name, "userID": newUser.userID, "userRole": newUser.role },
          process.env.ACCESS_TOKEN_SECRET,
          { expiresIn: accessTokenLifeTime }
       )
@@ -57,7 +57,10 @@ const logIn = async (req, res) => {
       const { email, password } = req.body
       const existUser = await User.findOne({ where: { email } })
       if (!existUser) return res.status(401).json({ ERROR: 'Email is not registered' })
-      if (!existUser) return res.status(404).json({ message: 'User does not exist' })
+
+      if (existUser.provider !== 'credential') {
+         return res.status(403).json({ ERROR: 'Please log in using your registered provider.' })
+      }
 
       const isPasswordCorrect = await bcrypt.compare(password, existUser.password)
       if (!isPasswordCorrect) return res.status(404).json({ message: 'Password is incorrect' })

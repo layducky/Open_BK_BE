@@ -17,4 +17,12 @@ const userLoginValidation = [
    body("password").exists().isString(),
 ]
 
-module.exports = {userCreateValidations, userUpdateValidations, userLoginValidation}
+const userGoogleValidation = [
+   body("email").exists().isEmail(),
+   body("name").exists().isString(),
+   body("image").optional().isString(),
+   body("provider").equals("google"),
+   body("providerId").exists().isString(),
+]
+
+module.exports = {userCreateValidations, userUpdateValidations, userLoginValidation, userGoogleValidation}

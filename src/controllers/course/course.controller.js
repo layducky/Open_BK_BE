@@ -1,5 +1,5 @@
 const { Course, User } = require('../../sequelize');
-const {filterNull, checkNull} = require('../../common/ultis');
+const {filterNull, checkNull} = require('../../utils/checkNull');
 const { generateCourseID } = require('../../utils/generateID');
 
 const CourseController = {

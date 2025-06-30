@@ -1,6 +1,6 @@
 const { Test, Question } = require('../../../sequelize');
 const { generateQuestionID } = require('../../../utils/generateID');
-const {filterNull, checkNull} = require('../../../common/ultis');
+const {filterNull, checkNull} = require('../../../utils/checkNull');
 
 
 const QuestionController = {

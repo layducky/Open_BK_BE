@@ -2,7 +2,7 @@ const { User, Course } = require('../../sequelize')
 const bcrypt = require('bcrypt')
 const { deleteCourse } = require('../course/course.controller')
 const { generateCollabID } = require('../../utils/generateID')
-const { filterNull, checkNull } = require('../../common/ultis')
+const { filterNull, checkNull } = require('../../utils/checkNull')
 
 //get user info
 const getUserInfo = async (req, res) => {

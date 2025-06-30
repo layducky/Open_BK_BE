@@ -1,6 +1,6 @@
 const { Unit, Course, Test } = require('../../sequelize');
 const { generateUnitID } = require('../../utils/generateID');
-const {filterNull, checkNull} = require('../../common/ultis');
+const {filterNull, checkNull} = require('../..//utils/checkNull');
 
 const UnitController = {
     async createUnit(req, res) {

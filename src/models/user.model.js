@@ -1,4 +1,3 @@
-const { Sequelize } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
   return sequelize.define("User", {
     userID: {
@@ -23,16 +22,28 @@ module.exports = (sequelize, DataTypes) => {
     },
     password: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     imageUrl: {
       type: DataTypes.STRING,
+      allowNull: false,
     },
     phoneNumber: {
       type: DataTypes.STRING,
+      allowNull: true,
     },
     biography: {
       type: DataTypes.STRING,
+      allowNull: true,
+    },
+    provider: {
+      type: DataTypes.ENUM('google', 'github', 'facebook'),
+      allowNull: true,
+    },
+    providerId: {
+      type: DataTypes.STRING,
+      unique: true,
+      allowNull: true,
     },
 
   }, {
