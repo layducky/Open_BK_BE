@@ -10,7 +10,7 @@ const CourseController = {
           include: {
             model: User,
             as: 'authorInfo',
-            attributes: ['name', 'imageUrl'],
+            attributes: ['name', 'image'],
           }
         });
       if(!courses) return res.status(404).json({message:'No course is found'}) 
@@ -27,7 +27,7 @@ const CourseController = {
         include: {
           model: User,
           as: 'authorInfo',
-          attributes: ['name', 'imageUrl'],
+          attributes: ['name', 'image'],
         }
       });
       if(!course) return res.status(404).json({message:'No course is found'}) 

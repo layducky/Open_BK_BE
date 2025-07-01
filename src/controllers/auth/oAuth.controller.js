@@ -19,7 +19,7 @@ const oAuth2 = async (req, res) => {
          return res.status(400).json({ error: "Missing required fields" });
       }
 
-      const imageUrl = "https://static.vecteezy.com/system/resources/thumbnails/002/318/271/small_2x/user-profile-icon-free-vector.jpg";
+      const image = "https://static.vecteezy.com/system/resources/thumbnails/002/318/271/small_2x/user-profile-icon-free-vector.jpg";
 
       const existingUser = await User.findOne({ where: { email }, transaction: t });
       const user = existingUser
@@ -28,7 +28,7 @@ const oAuth2 = async (req, res) => {
          userID: generateLearnerID(),
          name,
          email,
-         imageUrl: picture || imageUrl,
+         image: picture || image,
          provider,
          providerId
         }, { transaction: t });
@@ -46,7 +46,9 @@ const oAuth2 = async (req, res) => {
 
       return res.status(200).json({
          userID: user.userID,
+         name: user.name,
          role: user.role,
+         image: user.image,
          accessToken,
          message: "OAuth login success!"
       });

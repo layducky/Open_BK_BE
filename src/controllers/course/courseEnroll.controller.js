@@ -28,7 +28,7 @@ const courseEnroll = {
                  attributes: [
                    'courseName', 
                    'description', 
-                   'imageUrl',
+                   'image',
                    'category',
                    'price',
                  ],
@@ -36,7 +36,7 @@ const courseEnroll = {
                    {
                      model: User,
                      as: 'authorInfo',
-                     attributes: ['name', 'imageUrl'],
+                     attributes: ['name', 'image'],
                    },
                  ],
                },
@@ -61,7 +61,7 @@ const courseEnroll = {
               updatedAt: enrolled.updatedAt,
               courseName: course.courseName,
               description: course.description,
-              imageUrl: course.imageUrl,
+              image: course.image,
               category: course.category,
               price: course.price,
               authorInfo: course.authorInfo,

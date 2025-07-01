@@ -24,7 +24,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true,
     },
-    imageUrl: {
+    image: {
       type: DataTypes.STRING,
       allowNull: false,
     },
@@ -37,8 +37,8 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
     },
     provider: {
-      type: DataTypes.ENUM('google', 'github', 'facebook'),
-      allowNull: true,
+      type: DataTypes.ENUM('credentials', 'google', 'github', 'facebook'),
+      allowNull: false,
     },
     providerId: {
       type: DataTypes.STRING,

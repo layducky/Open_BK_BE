@@ -9,7 +9,7 @@ const CourseCollab = {
       const { courseName, image, category, description, price } = req.body;
       const imageUrl = "https://t4.ftcdn.net/jpg/07/77/57/53/360_F_777575393_rZskmeQsWOY8TXBjwjcyBOHamOQfZyHs.jpg";
 
-      if (checkNull({ courseName, imageUrl })) {
+      if (checkNull({ courseName, image })) {
         return res.status(400).json({ message: 'Course creation failed, some fields are missing' });
       }
 
@@ -18,7 +18,7 @@ const CourseCollab = {
         courseID,
         authorID: req.user.userID,
         courseName,
-        imageUrl,
+        image: image ?? imageUrl,
         category,
         description,
         price
@@ -43,7 +43,7 @@ const CourseCollab = {
             include: {
                model: User,
                as: 'authorInfo',
-               attributes: ['name', 'imageUrl'],
+               attributes: ['name', 'image'],
             },
           });
 
@@ -90,7 +90,7 @@ async updateCourse(req, res) {
          const { courseID } = req.params;
          const { courseName, image, category, description, price } = req.body;
          const imageUrl = "https://t4.ftcdn.net/jpg/07/77/57/53/360_F_777575393_rZskmeQsWOY8TXBjwjcyBOHamOQfZyHs.jpg";
-         if (checkNull({ courseName, imageUrl, category, description, price })) {
+         if (checkNull({ courseName, image, category, description, price })) {
             return res.status(400).json({ message: 'Course update failed, some fields are missing' });
          }
          const course = await Course.findByPk(courseID);
@@ -99,7 +99,7 @@ async updateCourse(req, res) {
          }
          const fieldsToUpdate = filterNull({
             courseName,
-            imageUrl,
+            image: image ?? imageUrl,
             category,
             description,
             price

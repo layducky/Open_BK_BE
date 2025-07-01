@@ -1,5 +1,5 @@
 // controllers/authController.js
-const { User } = require("../../sequelize");
+const { sequelize, User } = require("../../sequelize");
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const { generateLearnerID } = require('../../utils/generateID')
@@ -7,18 +7,19 @@ const { generateLearnerID } = require('../../utils/generateID')
 const accessTokenLifeTime = process.env.ACCESS_TOKEN_LIFETIME || '1d';
 // sign up
 const signUp = async (req, res) => {
+   const t = await sequelize.transaction();
    try {
       const { name, email, password } = req.body
 
       const userID = generateLearnerID()
-      const imageUrl = "https://static.vecteezy.com/system/resources/thumbnails/002/318/271/small_2x/user-profile-icon-free-vector.jpg"
+      const image = "https://static.vecteezy.com/system/resources/thumbnails/002/318/271/small_2x/user-profile-icon-free-vector.jpg"
 
       const dupplicate = await User.findOne({ where: { email } })
       if (dupplicate) return res.status(401).json({ ERROR: 'Email is registered' })
 
       const hashpwd = await bcrypt.hash(password, 10)
 
-      const newUser = await User.create({ userID , name, email, password: hashpwd, imageUrl, provider: 'credential'})
+      const newUser = await User.create({ userID, name, email, password: hashpwd, image, provider: 'credentials'}, { transaction: t })
       // create access, refresh token
       const accessToken = jwt.sign(
          { "username": newUser.name, "userID": newUser.userID, "userRole": newUser.role },
@@ -44,10 +45,11 @@ const signUp = async (req, res) => {
       // res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 })
       // pass accessToken to frontend (client-side) for later API calls
       const role = "LEARNER"
-      res.status(200).json({userID, role, accessToken, message: 'Register successfully!'})
+      await t.commit()
+      return res.status(200).json({userID, name, role, image: image, accessToken, message: 'Register successfully!'})
 
    } catch (err) {
-      res.status(500).json({ err: 'Error during registration', details: err.message })
+      return res.status(500).json({ err: 'Error during registration', details: err.message })
    }
 }
 
@@ -58,7 +60,7 @@ const logIn = async (req, res) => {
       const existUser = await User.findOne({ where: { email } })
       if (!existUser) return res.status(401).json({ ERROR: 'Email is not registered' })
 
-      if (existUser.provider !== 'credential') {
+      if (existUser.provider !== 'credentials') {
          return res.status(403).json({ ERROR: 'Please log in using your registered provider.' })
       }
 
@@ -86,11 +88,14 @@ const logIn = async (req, res) => {
       // })
 
       
-      const userID = existUser.userID
-      const role = existUser.role
-      res.status(200).json({ userID, role, accessToken, message: 'Login successfully!' })
+      const userID = existUser.userID;
+      const name = existUser.name;
+      const role = existUser.role;
+      const image = existUser.image;
+      return res.status(200).json({ userID, name, role, image, accessToken, message: 'Login successfully!' })
 
    } catch (err) {
+      console.error('Login error:', err)
       return res.status(500).json({ err: 'Error during login', details: err.message })
    }
 }

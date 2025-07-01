@@ -34,19 +34,18 @@ const getAllUsers = async (_, res) => {
 const createCollab = async (req, res) => {
 
    try {
-      const { name, email, role, password } = req.body
+      const { name, email, role, password, provider } = req.body
       const userID = generateCollabID()
       const duplicate = await User.findOne({ where: { email } })
       if (duplicate) return res.status(401).json({ ERROR: 'Email is registered' })
 
       const hashpwd = await bcrypt.hash(password, 10)
-      const imageUrl = "https://static.vecteezy.com/system/resources/thumbnails/002/318/271/small_2x/user-profile-icon-free-vector.jpg"
+      const image = "https://static.vecteezy.com/system/resources/thumbnails/002/318/271/small_2x/user-profile-icon-free-vector.jpg";
 
-      const user = await User.create({ userID, name, email, role, password: hashpwd, imageUrl })
+      const user = await User.create({ userID, name, email, role, password: hashpwd, image, provider: provider ?? 'credentials' })
       res.json({ message: 'Created user successfully', user })
    }
    catch (err) {
-      console.error(err);
       res.status(500).json({ error: err.message });
    }
 }
