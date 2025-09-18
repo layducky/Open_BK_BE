@@ -22,13 +22,3 @@ node_modules/
 # Ignore các thư mục và file tạm thời
 *.tmp
 *.bak
-
-# Ignore các file liên quan đến Python (ví dụ: bytecode, virtualenv)
-__pycache__/
-*.pyc
-*.pyo
-venv/
-
-# Ignore môi trường Docker
-docker-compose.override.yml
-Dockerfile*
