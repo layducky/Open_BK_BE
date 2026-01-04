@@ -2,8 +2,8 @@ name: CI/CD Backend
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - 'v*.*.*'
 
 jobs:
   build-and-push:
@@ -22,5 +22,7 @@ jobs:
       - name: Build & Push Docker Image
         run: |
           IMAGE=${{ secrets.DOCKER_USERNAME }}/openbk-be
-          docker build -t $IMAGE:latest .
-          docker push $IMAGE:latest
+          VERSION=${GITHUB_REF_NAME#v}
+
+          docker build -t $IMAGE:$VERSION .
+          docker push $IMAGE:$VERSION
