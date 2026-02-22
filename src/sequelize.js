@@ -1,4 +1,5 @@
 const pg = require("pg");
+const bcrypt = require("bcrypt");
 const { Sequelize, DataTypes } = require("sequelize");
 const UserModel = require("./models/user.model");
 const CourseModel = require("./models/course.model");
@@ -103,9 +104,11 @@ Participate.belongsTo(Course, {
   onDelete: 'CASCADE',
 });
 
+const createDbFromUrl = require('./create-db');
 
 (async () => {
   try {
+    await createDbFromUrl(process.env.DB_URL);
     await sequelize.authenticate();
     console.log('Database connected');
     await sequelize.sync({ alter: true });
