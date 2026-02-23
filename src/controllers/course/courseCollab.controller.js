@@ -13,6 +13,11 @@ const CourseCollab = {
         return res.status(400).json({ message: 'Course creation failed, some fields are missing' });
       }
 
+      const priceNum = typeof price === 'number' ? price : parseFloat(price);
+      if (typeof priceNum === 'number' && !Number.isNaN(priceNum) && priceNum < 0) {
+        return res.status(400).json({ message: 'Price cannot be negative' });
+      }
+
       const courseID = generateCourseID();
       const fieldsToCreate = filterNull({
         courseID,
@@ -97,6 +102,12 @@ async updateCourse(req, res) {
          if (!course) {
             return res.status(404).json({ message: 'Course not found' });
          }
+
+         const priceNum = typeof price === 'number' ? price : parseFloat(price);
+         if (typeof priceNum === 'number' && !Number.isNaN(priceNum) && priceNum < 0) {
+           return res.status(400).json({ message: 'Price cannot be negative' });
+         }
+
          const fieldsToUpdate = filterNull({
             courseName,
             image: image ?? imageUrl,

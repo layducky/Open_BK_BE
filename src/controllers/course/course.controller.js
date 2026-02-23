@@ -76,18 +76,62 @@ const CourseController = {
     }
   },
 
+  async getCategories(req, res) {
+    try {
+      const categories = [
+        { value: 'MATH', label: 'Math' },
+        { value: 'ENGLISH', label: 'English' },
+        { value: 'CODE', label: 'Code' },
+        { value: 'ART', label: 'Art' },
+        { value: 'NONE', label: 'None' },
+      ];
+      res.status(200).json(categories);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
   async getCourseByID(req, res) {
     try {
-      const { courseID } = req.params
-      const course = await Course.findOne({where: { courseID },
+      const { courseID } = req.params;
+      const course = await Course.findOne({
+        where: { courseID },
         include: {
           model: User,
           as: 'authorInfo',
           attributes: ['name', 'image'],
-        }
+        },
       });
-      if(!course) return res.status(404).json({message:'No course is found'}) 
-      res.status(200).json(course);
+      if (!course) return res.status(404).json({ message: 'No course is found' });
+
+      const learnersCount = await Participate.count({
+        where: { courseID },
+      });
+
+      const authorID = course.authorID;
+      const ownedCourses = await Course.count({
+        where: { authorID },
+      });
+      const authorCourseIDs = (await Course.findAll({ where: { authorID }, attributes: ['courseID'] })).map((c) => c.courseID);
+      const totalLearners =
+        authorCourseIDs.length === 0
+          ? 0
+          : await Participate.count({
+              distinct: true,
+              col: 'learnerID',
+              where: { courseID: { [Op.in]: authorCourseIDs } },
+            });
+
+      const payload = {
+        ...course.toJSON(),
+        learnersCount,
+        authorStats: {
+          totalLearners,
+          ownedCourses,
+        },
+      };
+
+      res.status(200).json(payload);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }

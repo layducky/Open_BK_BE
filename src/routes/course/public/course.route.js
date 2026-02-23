@@ -5,6 +5,7 @@ const { verifyJWT } = require('../../../middleware/verifyJWT');
 const router = express.Router();
 
 router.get('/', CourseController.getAllCourses);
+router.get('/categories', CourseController.getCategories);
 router.get('/:courseID', CourseController.getCourseByID);
 
 router.use(verifyJWT(["ADMIN"]));
