@@ -1,18 +1,61 @@
 const { Course, User } = require('../../sequelize');
-const {filterNull, checkNull} = require('../../utils/checkNull');
-const { generateCourseID } = require('../../utils/generateID');
+const { filterNull, checkNull } = require('../../utils/checkNull');
+const { Op } = require('sequelize');
 
 const CourseController = {
 
   async getAllCourses(req, res) {
     try {
-      const courses = await Course.findAll({
-          include: {
-            model: User,
-            as: 'authorInfo',
-            attributes: ['name', 'image'],
-          }
+      const { search, category, priceType } = req.query;
+      console.log(search, category, priceType);
+      const filters = [];
+
+      if (category && category !== 'ALL') {
+        filters.push({ category });
+      }
+
+      if (priceType === 'FREE') {
+        filters.push({
+          [Op.or]: [
+            { price: 'Free' },
+            { price: '0' },
+            { price: '0.0' },
+            { price: '0.00' },
+          ],
         });
+      } else if (priceType === 'PAID') {
+        filters.push({
+          price: {
+            [Op.notIn]: ['Free', '0', '0.0', '0.00'],
+          },
+        });
+      }
+
+      if (search && search.trim() !== '') {
+        const query = search.trim();
+        filters.push({
+          [Op.or]: [
+            { courseName: { [Op.like]: `%${query}%` } },
+            { description: { [Op.like]: `%${query}%` } },
+          ],
+        });
+      }
+
+      const where =
+        filters.length > 0
+          ? {
+              [Op.and]: filters,
+            }
+          : undefined;
+
+      const courses = await Course.findAll({
+        where,
+        include: {
+          model: User,
+          as: 'authorInfo',
+          attributes: ['name', 'image'],
+        },
+      });
       if(!courses) return res.status(404).json({message:'No course is found'}) 
       res.status(200).json( courses);
     } catch (error) {

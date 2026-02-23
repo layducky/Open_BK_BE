@@ -19,7 +19,7 @@ const oAuth2 = async (req, res) => {
          return res.status(400).json({ error: "Missing required fields" });
       }
 
-      const image = "https://static.vecteezy.com/system/resources/thumbnails/002/318/271/small_2x/user-profile-icon-free-vector.jpg";
+      const image = "https://res.cloudinary.com/dv2izp0a3/image/upload/v1771752241/default-avatar_hnzfdu.jpg";
 
       const existingUser = await User.findOne({ where: { email }, transaction: t });
       const user = existingUser

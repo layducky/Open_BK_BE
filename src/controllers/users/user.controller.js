@@ -40,7 +40,7 @@ const createCollab = async (req, res) => {
       if (duplicate) return res.status(401).json({ ERROR: 'Email is registered' })
 
       const hashpwd = await bcrypt.hash(password, 10)
-      const image = "https://static.vecteezy.com/system/resources/thumbnails/002/318/271/small_2x/user-profile-icon-free-vector.jpg";
+      const image = "https://res.cloudinary.com/dv2izp0a3/image/upload/v1771752241/default-avatar_hnzfdu.jpg";
 
       const user = await User.create({ userID, name, email, role, password: hashpwd, image, provider: provider ?? 'credentials' })
       res.json({ message: 'Created user successfully', user })

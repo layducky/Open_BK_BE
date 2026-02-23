@@ -12,7 +12,7 @@ const signUp = async (req, res) => {
       const { name, email, password } = req.body
 
       const userID = generateLearnerID()
-      const image = "https://static.vecteezy.com/system/resources/thumbnails/002/318/271/small_2x/user-profile-icon-free-vector.jpg"
+      const image = "https://res.cloudinary.com/dv2izp0a3/image/upload/v1771752241/default-avatar_hnzfdu.jpg"
 
       const dupplicate = await User.findOne({ where: { email } })
       if (dupplicate) return res.status(401).json({ ERROR: 'Email is registered' })
