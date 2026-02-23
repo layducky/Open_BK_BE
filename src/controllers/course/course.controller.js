@@ -1,4 +1,4 @@
-const { Course, User } = require('../../sequelize');
+const { Course, User, Participate } = require('../../sequelize');
 const { filterNull, checkNull } = require('../../utils/checkNull');
 const { Op } = require('sequelize');
 
@@ -7,7 +7,6 @@ const CourseController = {
   async getAllCourses(req, res) {
     try {
       const { search, category, priceType } = req.query;
-      console.log(search, category, priceType);
       const filters = [];
 
       if (category && category !== 'ALL') {
@@ -56,8 +55,22 @@ const CourseController = {
           attributes: ['name', 'image'],
         },
       });
-      if(!courses) return res.status(404).json({message:'No course is found'}) 
-      res.status(200).json( courses);
+      if (!courses) return res.status(404).json({ message: 'No course is found' });
+
+      const coursesWithCounts = await Promise.all(
+        courses.map(async (course) => {
+          const learnersCount = await Participate.count({
+            where: { courseID: course.courseID },
+          });
+
+          return {
+            ...course.toJSON(),
+            learnersCount,
+          };
+        })
+      );
+
+      res.status(200).json(coursesWithCounts);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }

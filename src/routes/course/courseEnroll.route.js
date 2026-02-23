@@ -5,6 +5,7 @@ const CourseEnroll = require('../../controllers/course/courseEnroll.controller')
 
 router.use(verifyJWT(["LEARNER", "COLLAB", "ADMIN"]))
 router.get('/', CourseEnroll.getEnrolledCourses)
+router.get('/stats', CourseEnroll.getStats)
 router.post('/:courseID', CourseEnroll.enrollCourse)
 router.delete('/:courseID', CourseEnroll.deleteEnrolledCoures)
 

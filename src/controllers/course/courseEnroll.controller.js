@@ -1,7 +1,7 @@
 const { User, Participate, Course } = require('../../sequelize');
 const { Unit, Test, UserTest } = require('../../sequelize');
 const { sequelize } = require('../../sequelize');
-
+const { Op } = require('sequelize');
 
 const courseEnroll = {
    async getEnrolledCourses (req, res) {
@@ -168,6 +168,80 @@ const courseEnroll = {
          }
 
          return res.status(200).json({ message: 'Deleted learner from course successfully' });
+      } catch (err) {
+         console.error(err);
+         return res.status(500).json({ error: err.message });
+      }
+   },
+   async getStats (req, res) {
+      try {
+         const userID = req.user.userID;
+         const role = req.user.userRole;
+         if (!userID || !role) {
+            return res.status(400).json({ error: 'User information is missing' });
+         }
+
+         if (role === 'LEARNER') {
+            const enrolledCount = await Participate.count({
+               where: { learnerID: userID },
+            });
+
+            return res.status(200).json({
+               role,
+               enrolledCourses: enrolledCount,
+            });
+         }
+
+         if (role === 'COLLAB') {
+            const ownedCourses = await Course.findAll({
+               where: { authorID: userID },
+               attributes: ['courseID'],
+            });
+
+            const courseIDs = ownedCourses.map(c => c.courseID);
+
+            if (courseIDs.length === 0) {
+               return res.status(200).json({
+                  role,
+                  enrolledCourses: 0,
+                  totalLearners: 0,
+               });
+            }
+
+            const enrolledCourses = await Participate.count({
+               distinct: true,
+               col: 'courseID',
+               where: {
+                  courseID: {
+                     [Op.in]: courseIDs,
+                  },
+               },
+            });
+
+            const totalLearners = await Participate.count({
+               distinct: true,
+               col: 'learnerID',
+               where: {
+                  courseID: {
+                     [Op.in]: courseIDs,
+                  },
+               },
+            });
+
+            return res.status(200).json({
+               role,
+               enrolledCourses,
+               totalLearners,
+               ownedCourses: courseIDs.length,
+            });
+         }
+
+         const enrolledCount = await Participate.count();
+
+         return res.status(200).json({
+            role,
+            enrolledCourses: enrolledCount,
+         });
       } catch (err) {
          console.error(err);
          return res.status(500).json({ error: err.message });
