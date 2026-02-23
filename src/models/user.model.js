@@ -45,6 +45,21 @@ module.exports = (sequelize, DataTypes) => {
       unique: true,
       allowNull: true,
     },
+    enrolledCoursesCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+    },
+    createdCoursesCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+    },
+    totalEnrolledStudentsCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+    },
 
   }, {
     modelName: 'User',

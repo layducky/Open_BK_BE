@@ -163,6 +163,42 @@ const SubmitController = {
     },
 
 
+    async getSubmissionById(req, res) {
+        try {
+            const { submissionID } = req.params;
+            const userID = req.user?.userID;
+            if (!userID) return res.status(401).json({ message: 'Unauthorized' });
+
+            const submission = await Submission.findByPk(submissionID, {
+                include: [
+                    {
+                        model: QuesAns,
+                        as: 'quesAns',
+                        include: [
+                            {
+                                model: Question,
+                                as: 'questionInfo',
+                                attributes: ['questionID', 'content', 'ansA', 'ansB', 'ansC', 'ansD', 'correctAns', 'explanation', 'numericalOrder'],
+                            },
+                        ],
+                    },
+                    {
+                        model: Test,
+                        as: 'test_submissions',
+                        attributes: ['testID', 'testName', 'numQuests'],
+                    },
+                ],
+            });
+
+            if (!submission) return res.status(404).json({ message: 'Submission not found' });
+            if (submission.studentID !== userID) return res.status(403).json({ message: 'Forbidden' });
+
+            return res.status(200).json(submission);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    },
+
     async getAllSubmissionOnTest (req, res) {
         try {
             const { userTestID } = req.params;

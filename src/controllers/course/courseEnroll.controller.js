@@ -110,7 +110,20 @@ const courseEnroll = {
          await Participate.create({
             learnerID: userID,
             courseID,
-         }, {transaction: t});
+         }, { transaction: t });
+
+         await course.increment('enrolledStudentsCount', { transaction: t });
+         await learner.increment('enrolledCoursesCount', { transaction: t });
+
+         const author = await User.findByPk(course.authorID, { transaction: t });
+         if (author) {
+           const otherEnroll = await Participate.findOne({
+             where: { learnerID: userID },
+             include: [{ model: Course, as: 'courseInfo', where: { authorID: course.authorID }, attributes: [] }],
+             transaction: t,
+           });
+           if (!otherEnroll) await author.increment('totalEnrolledStudentsCount', { transaction: t });
+         }
 
          const tests = await Test.findAll({
             attributes: ['testID'],
@@ -156,16 +169,29 @@ const courseEnroll = {
             return res.status(404).json({ error: 'Course not found!' });
           }
 
-          const deleted = await Participate.destroy({
-            where: {
-               learnerID,
-               courseID,
-            },
+          const participation = await Participate.findOne({
+            where: { learnerID, courseID },
           });
-
-         if (!deleted) {
+          if (!participation) {
             return res.status(404).json({ error: 'Learner not found in this course' });
-         }
+          }
+
+          const deleted = await Participate.destroy({
+            where: { learnerID, courseID },
+          });
+          if (!deleted) return res.status(500).json({ error: 'Failed to delete' });
+
+          await course.decrement('enrolledStudentsCount');
+          const learner = await User.findByPk(learnerID);
+          if (learner) await learner.decrement('enrolledCoursesCount');
+          const author = await User.findByPk(course.authorID);
+          if (author) {
+            const stillEnrolled = await Participate.findOne({
+              where: { learnerID },
+              include: [{ model: Course, as: 'courseInfo', where: { authorID: course.authorID }, attributes: [] }],
+            });
+            if (!stillEnrolled) await author.decrement('totalEnrolledStudentsCount');
+          }
 
          return res.status(200).json({ message: 'Deleted learner from course successfully' });
       } catch (err) {
@@ -182,9 +208,8 @@ const courseEnroll = {
          }
 
          if (role === 'LEARNER') {
-            const enrolledCount = await Participate.count({
-               where: { learnerID: userID },
-            });
+            const user = await User.findByPk(userID, { attributes: ['enrolledCoursesCount'] });
+            const enrolledCount = user?.enrolledCoursesCount ?? 0;
 
             return res.status(200).json({
                role,
@@ -193,46 +218,26 @@ const courseEnroll = {
          }
 
          if (role === 'COLLAB') {
-            const ownedCourses = await Course.findAll({
+            const user = await User.findByPk(userID, {
+               attributes: ['createdCoursesCount', 'totalEnrolledStudentsCount'],
+            });
+            const ownedCourses = (user?.createdCoursesCount ?? 0);
+            const totalLearners = (user?.totalEnrolledStudentsCount ?? 0);
+            const courseIDs = (await Course.findAll({
                where: { authorID: userID },
                attributes: ['courseID'],
-            });
-
-            const courseIDs = ownedCourses.map(c => c.courseID);
-
-            if (courseIDs.length === 0) {
-               return res.status(200).json({
-                  role,
-                  enrolledCourses: 0,
-                  totalLearners: 0,
-               });
-            }
-
-            const enrolledCourses = await Participate.count({
+            })).map((c) => c.courseID);
+            const enrolledCourses = courseIDs.length === 0 ? 0 : await Participate.count({
                distinct: true,
                col: 'courseID',
-               where: {
-                  courseID: {
-                     [Op.in]: courseIDs,
-                  },
-               },
-            });
-
-            const totalLearners = await Participate.count({
-               distinct: true,
-               col: 'learnerID',
-               where: {
-                  courseID: {
-                     [Op.in]: courseIDs,
-                  },
-               },
+               where: { courseID: { [Op.in]: courseIDs } },
             });
 
             return res.status(200).json({
                role,
                enrolledCourses,
                totalLearners,
-               ownedCourses: courseIDs.length,
+               ownedCourses,
             });
          }
 

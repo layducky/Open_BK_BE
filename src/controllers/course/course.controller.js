@@ -57,18 +57,10 @@ const CourseController = {
       });
       if (!courses) return res.status(404).json({ message: 'No course is found' });
 
-      const coursesWithCounts = await Promise.all(
-        courses.map(async (course) => {
-          const learnersCount = await Participate.count({
-            where: { courseID: course.courseID },
-          });
-
-          return {
-            ...course.toJSON(),
-            learnersCount,
-          };
-        })
-      );
+      const coursesWithCounts = courses.map((course) => ({
+        ...course.toJSON(),
+        learnersCount: course.enrolledStudentsCount ?? 0,
+      }));
 
       res.status(200).json(coursesWithCounts);
     } catch (error) {
@@ -99,35 +91,19 @@ const CourseController = {
         include: {
           model: User,
           as: 'authorInfo',
-          attributes: ['name', 'image'],
+          attributes: ['name', 'image', 'createdCoursesCount', 'totalEnrolledStudentsCount'],
         },
       });
       if (!course) return res.status(404).json({ message: 'No course is found' });
 
-      const learnersCount = await Participate.count({
-        where: { courseID },
-      });
-
-      const authorID = course.authorID;
-      const ownedCourses = await Course.count({
-        where: { authorID },
-      });
-      const authorCourseIDs = (await Course.findAll({ where: { authorID }, attributes: ['courseID'] })).map((c) => c.courseID);
-      const totalLearners =
-        authorCourseIDs.length === 0
-          ? 0
-          : await Participate.count({
-              distinct: true,
-              col: 'learnerID',
-              where: { courseID: { [Op.in]: authorCourseIDs } },
-            });
-
+      const learnersCount = course.enrolledStudentsCount ?? 0;
+      const author = course.authorInfo;
       const payload = {
         ...course.toJSON(),
         learnersCount,
         authorStats: {
-          totalLearners,
-          ownedCourses,
+          totalLearners: author?.totalEnrolledStudentsCount ?? 0,
+          ownedCourses: author?.createdCoursesCount ?? 0,
         },
       };
 

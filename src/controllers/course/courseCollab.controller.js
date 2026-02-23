@@ -31,6 +31,9 @@ const CourseCollab = {
 
       await Course.create(fieldsToCreate);
 
+      const author = await User.findByPk(req.user.userID);
+      if (author) await author.increment('createdCoursesCount');
+
       return res.status(201).json({courseID, message: 'Course creation is successful' });
 
     } catch (error) {
@@ -126,17 +129,31 @@ async updateCourse(req, res) {
 
    async deleteCourse (req, res) {
       try {
-         const { courseID }  = req.params;
-         deleted = await Course.destroy({
-           where:{
-             courseID,
-           },
-         })
- 
-         if(!deleted) return res.status(404).json({ error: 'Course not found' });
- 
+         const { courseID } = req.params;
+         const course = await Course.findByPk(courseID);
+         if (!course) return res.status(404).json({ error: 'Course not found' });
+
+         const authorID = course.authorID;
+         const enrolledCount = course.enrolledStudentsCount || 0;
+         const participations = await Participate.findAll({ where: { courseID }, attributes: ['learnerID'] });
+         const learnerIDs = [...new Set(participations.map((p) => p.learnerID))];
+
+         await Participate.destroy({ where: { courseID } });
+         const deleted = await Course.destroy({ where: { courseID } });
+         if (!deleted) return res.status(500).json({ error: 'Failed to delete course' });
+
+         const author = await User.findByPk(authorID);
+         if (author) {
+           await author.decrement('createdCoursesCount');
+           if (enrolledCount > 0) await author.decrement('totalEnrolledStudentsCount', { by: enrolledCount });
+         }
+         for (const lid of learnerIDs) {
+           const learner = await User.findByPk(lid);
+           if (learner) await learner.decrement('enrolledCoursesCount');
+         }
+
          res.status(200).json({ message: 'Deleted course successfully' });
-      }catch (error) {
+      } catch (error) {
          res.status(500).json({ error: error.message });
       }
    },
