@@ -154,7 +154,7 @@ const courseEnroll = {
          return res.status(500).json({ error: err.message });
       }
    },
-   async deleteEnrolledCoures (req, res) {
+   async deleteEnrolledCourses (req, res) {
       try {
          const { courseID } = req.params;
          const learnerID = req.user.userID;

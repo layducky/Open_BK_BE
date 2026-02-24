@@ -15,7 +15,7 @@ const SubmissionModel = require("./models/test/submission.model");
 const quesAnswerModel = require("./models/test/quesAns.model");
 
 pg.defaults.ssl = process.env.SSL || false;
-DB_DIALECT = process.env.DB_DIALECT || 'postgres';
+const DB_DIALECT = process.env.DB_DIALECT || 'postgres';
 const sequelize = new Sequelize(
   process.env.DB_URL,
   {
@@ -46,7 +46,8 @@ User.hasMany(Course, {
   foreignKey: 'authorID',
   as: 'authorInfo',
 });
-User.hasMany(Submission, { foreignKey: 'studentID', as: 'user_submissions' })
+User.hasMany(Submission, { foreignKey: 'studentID', as: 'user_submissions' });
+User.hasMany(UserTest, { foreignKey: 'userID', as: 'user_tests' });
 
 Course.hasMany(Unit, { foreignKey: 'courseID', as: 'course_units' });
 Course.hasOne(Preview, { foreignKey: 'courseID', as: 'preview' });
@@ -77,11 +78,12 @@ Question.belongsTo(Test, {
 });
 Question.hasMany(QuesAns, { foreignKey: 'questionID', as: 'questionInfo'})
 
+UserTest.belongsTo(User, { foreignKey: 'userID', as: 'user' });
 UserTest.belongsTo(Test, { foreignKey: 'testID', as: 'user_tests', onDelete: 'CASCADE' });
-UserTest.hasMany(Submission, { foreignKey: 'testID', as: 'userTest_submissions' });
+UserTest.hasMany(Submission, { foreignKey: 'userTestID', as: 'userTest_submissions' });
 
-Submission.belongsTo(Test, { foreignKey: 'testID', as: 'test_submissions'});
-Submission.belongsTo(UserTest, { foreignKey: 'testID', as: 'userTest_submissions', onDelete: 'CASCADE'});
+Submission.belongsTo(Test, { foreignKey: 'testID', as: 'test_submissions' });
+Submission.belongsTo(UserTest, { foreignKey: 'userTestID', as: 'userTest_submissions', onDelete: 'CASCADE' });
 Submission.hasMany(QuesAns, { foreignKey: 'submissionID', as: 'quesAns'});
 
 QuesAns.belongsTo(Question, { foreignKey: 'questionID', as: 'questionInfo', onDelete: 'CASCADE'});

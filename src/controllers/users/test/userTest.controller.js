@@ -1,4 +1,4 @@
-const { sequelize, UserTest, Test, Submission } = require('../../../sequelize'); 
+const { sequelize, UserTest, Test, Submission, Unit } = require('../../../sequelize'); 
 const UserTestController = {
     
     async getByID (req, res) {        
@@ -14,8 +14,16 @@ const UserTestController = {
             });
 
             if (!userTest) {
+                const test = await Test.findByPk(testID, {
+                    include: [{ model: Unit, as: 'unit_tests', attributes: ['courseID'] }],
+                    transaction: t,
+                });
+                const courseID = test?.unit_tests?.courseID ?? null;
                 await t.rollback();
-                return res.status(404).json({ message: 'User not enroll this course' });
+                return res.status(403).json({
+                    message: 'You must enroll in this course to access this test',
+                    courseID,
+                });
             }
 
             const [test, submissions] = await Promise.all([

@@ -7,7 +7,7 @@ const TestController = {
         const t = await sequelize.transaction(); 
         try {
             const { unitID } = req.params;
-            const { testName, description, duration } = req.body;
+            const { testName, description, duration, openDate, closeDate, maxAttempts } = req.body;
 
             if (!testName || !description || !duration) {
                 await t.rollback();
@@ -26,15 +26,18 @@ const TestController = {
             });
             const numericalOrder = (maxOrder || 0) + 1;            
             const testID = generateTestID();
-            //Create NEW TEST
-            const test = await Test.create({
+            const testData = {
                 testID,
                 unitID,
                 testName,
                 numericalOrder,
                 description,
-                duration
-            }, {transaction: t});
+                duration,
+                ...(openDate && { openDate: new Date(openDate) }),
+                ...(closeDate && { closeDate: new Date(closeDate) }),
+                ...(maxAttempts != null && { maxAttempts }),
+            };
+            const test = await Test.create(testData, { transaction: t });
             
             const courseID = unit.courseID;
             const exist = await Participate.findOne({
@@ -99,12 +102,19 @@ const TestController = {
     async updateTest(req, res) {
         try {
             const { testID } = req.params;
-            const { testName, description, duration } = req.body;
+            const { testName, description, duration, openDate, closeDate, maxAttempts } = req.body;
 
             const test = await Test.findByPk(testID);
             if (!test) return res.status(404).json({ error: 'Test not found' });
 
-            await test.update({ testName, description, duration });
+            const updates = {};
+            if (testName !== undefined) updates.testName = testName;
+            if (description !== undefined) updates.description = description;
+            if (duration !== undefined) updates.duration = duration;
+            if (openDate !== undefined) updates.openDate = openDate ? new Date(openDate) : null;
+            if (closeDate !== undefined) updates.closeDate = closeDate ? new Date(closeDate) : null;
+            if (maxAttempts !== undefined) updates.maxAttempts = maxAttempts;
+            if (Object.keys(updates).length > 0) await test.update(updates);
             res.status(200).json({ message: 'Updated test successfully' });
         } catch (error) {
             res.status(500).json({ error: error.message });

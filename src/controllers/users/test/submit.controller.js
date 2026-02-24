@@ -1,16 +1,15 @@
 const { Submission, UserTest, Question, Test, QuesAns, sequelize } = require('../../../sequelize');
-const { filterNull, checkNull } = require('../../../utils/checkNull');
 
 const SubmitController = {
     async createSubmit(req, res) {
-    const t = await sequelize.transaction();
+        const t = await sequelize.transaction();
         try {
             const { userTestID } = req.params;
             const { userID } = req.user;
 
             const userTest = await UserTest.findOne({
                 where: { userTestID },
-                attributes: ['testID', 'userTestID'],
+                include: [{ model: Test, as: 'user_tests', attributes: ['duration'] }],
                 transaction: t,
             });
 
@@ -29,10 +28,10 @@ const SubmitController = {
                 transaction: t,
             });
 
-            if (latestSubmission?.status === 'pending') {
+            if (latestSubmission?.status === 'ongoing') {
                 await t.rollback();
                 return res.status(400).json({
-                    message: 'You already have a pending submission. Please finish it before starting a new one.',
+                    message: 'You already have an ongoing submission. Please finish it before starting a new one.',
                 });
             }
 
@@ -60,9 +59,13 @@ const SubmitController = {
 
             await t.commit();
 
+            const duration = userTest.user_tests?.duration ?? 0;
+            const startedAt = submit.createdAt ? new Date(submit.createdAt).toISOString() : new Date().toISOString();
             return res.status(201).json({
                 submissionID: submit.submissionID,
-                duration: submit.duration,
+                duration,
+                startedAt,
+                serverTime: Date.now(),
                 message: 'Examination start now!',
             });
 
@@ -82,7 +85,7 @@ const SubmitController = {
                 include: {
                     model: Test,
                     as: 'test_submissions',
-                    attributes: ['numQuests'],
+                    attributes: ['numQuests', 'duration'],
                 },
                 transaction: t
             });
@@ -101,8 +104,10 @@ const SubmitController = {
                 return res.status(400).json({ message: 'Invalid submission data' });
             }
 
+            const test = submissionRecord.test_submissions;
+            const durationMinutes = test?.duration ?? 0;
             const now = Date.now();
-            const deadline = new Date(submissionRecord.createdAt).getTime() + submissionRecord.duration * 60 * 1000;
+            const deadline = new Date(submissionRecord.createdAt).getTime() + durationMinutes * 60 * 1000;
             if (deadline < now) {
                 await t.rollback();
                 return res.status(403).json({ error: 'Deadline exceeded' });
@@ -132,7 +137,8 @@ const SubmitController = {
             });
             const AnsList = await Promise.all(quesAnsPromises);
             const numRightAns = AnsList.reduce((sum, correct) => sum + correct, 0);
-            const totalScore = (numRightAns / submissionRecord.test_submissions.numQuests) * 100 || 0;
+            const numQuests = test?.numQuests ?? 1;
+            const totalScore = (numRightAns / numQuests) * 100 || 0;
             
 
             if (status === "submitted") {
@@ -140,7 +146,7 @@ const SubmitController = {
                 const timeTaken = (submittedAt - new Date(submissionRecord.createdAt)) / 60000;
 
                 await submissionRecord.update({
-                    status,
+                    status: 'submitted',
                     submittedAt,
                     timeTaken,
                     numRightAns,
@@ -148,7 +154,7 @@ const SubmitController = {
                 }, { transaction: t });
 
                 await UserTest.update(
-                    { status: 'allow' },
+                    { status: 'allow', score: totalScore },
                     { where: { userTestID: submissionRecord.userTestID }, transaction: t }
                 );
             }
@@ -162,6 +168,35 @@ const SubmitController = {
         }
     },
 
+
+    async getSubmissionTiming(req, res) {
+        try {
+            const { submissionID } = req.params;
+            const userID = req.user?.userID;
+            if (!userID) return res.status(401).json({ message: 'Unauthorized' });
+
+            const submission = await Submission.findByPk(submissionID, {
+                include: {
+                    model: Test,
+                    as: 'test_submissions',
+                    attributes: ['duration'],
+                },
+            });
+            if (!submission) return res.status(404).json({ message: 'Submission not found' });
+            if (submission.studentID !== userID) return res.status(403).json({ message: 'Forbidden' });
+            if (submission.status !== 'ongoing') return res.status(400).json({ message: 'Submission is not ongoing' });
+
+            const duration = submission.test_submissions?.duration ?? 0;
+            const startedAt = submission.createdAt ? new Date(submission.createdAt).toISOString() : null;
+            return res.status(200).json({
+                startedAt,
+                duration,
+                serverTime: Date.now(),
+            });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    },
 
     async getSubmissionById(req, res) {
         try {
