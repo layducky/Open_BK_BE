@@ -3,6 +3,8 @@ const router = express.Router()
 const SubmitController = require('../../../controllers/users/test/submit.controller');
 
 router.post('/:userTestID', SubmitController.createSubmit);
+router.post('/:userTestID/force-end-and-create', SubmitController.forceEndAndCreate);
+router.get('/ongoing/:submissionID', SubmitController.getOngoingAnswers);
 router.put('/:submissionID', SubmitController.updateSubmit);
 router.get('/timing/:submissionID', SubmitController.getSubmissionTiming);
 router.get('/review/:submissionID', SubmitController.getSubmissionById);

@@ -30,6 +30,7 @@ const UserTestController = {
                 Test.findOne({
                     where: { testID },
                     attributes: ['testName', 'maxAttempts','numericalOrder', 'duration', 'numQuests'],
+                    include: [{ model: Unit, as: 'unit_tests', attributes: ['courseID'] }],
                 }),
                 Submission.findAll({
                     where: { userTestID: userTest.userTestID },
@@ -43,6 +44,7 @@ const UserTestController = {
 
             await t.commit();
 
+            const courseID = test?.unit_tests?.courseID ?? null;
             return res.status(200).json({
                 userTestID: userTest.userTestID,
                 testName: test ? test.testName : null,
@@ -53,6 +55,7 @@ const UserTestController = {
                 duration: test ? test.duration : null,
                 numQuests: test ? test.numQuests : null,
                 lastSubmissionID,
+                courseID,
                 submissions: submissions.map(s => s.toJSON()),
             });
 
