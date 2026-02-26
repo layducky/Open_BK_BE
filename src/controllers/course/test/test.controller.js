@@ -1,6 +1,7 @@
 const { Test, Unit, Question, UserTest, Participate } = require('../../../sequelize');
 const { generateTestID } = require('../../../utils/generateID');
 const { sequelize } = require('../../../sequelize');
+const { cascadeUpdateFromTest, cascadeUpdateFromUnit } = require('../../../utils/cascadeUpdate');
 
 const TestController = {
     async createTest(req, res) {
@@ -69,6 +70,7 @@ const TestController = {
             }
 
             await t.commit();
+            await cascadeUpdateFromTest(testID);
             res.status(201).json({ testID: test.testID, message: 'Created test successfully' });
         } catch (error) {
             res.status(500).json({ error: error.message });
@@ -115,6 +117,7 @@ const TestController = {
             if (closeDate !== undefined) updates.closeDate = closeDate ? new Date(closeDate) : null;
             if (maxAttempts !== undefined) updates.maxAttempts = maxAttempts;
             if (Object.keys(updates).length > 0) await test.update(updates);
+            await cascadeUpdateFromTest(testID);
             res.status(200).json({ message: 'Updated test successfully' });
         } catch (error) {
             res.status(500).json({ error: error.message });
@@ -127,7 +130,9 @@ const TestController = {
             const test = await Test.findByPk(testID);
             if (!test) return res.status(404).json({ error: 'Test not found' });
 
+            const unitIDToCascade = test.unitID;
             await test.destroy();
+            await cascadeUpdateFromUnit(unitIDToCascade);
             res.status(200).json({ message: 'Deleted test successfully' });
         } catch (error) {
             res.status(500).json({ error: error.message });

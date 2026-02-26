@@ -1,6 +1,7 @@
 const { Unit, Course, Test } = require('../../sequelize');
 const { generateUnitID } = require('../../utils/generateID');
 const {filterNull, checkNull} = require('../..//utils/checkNull');
+const { cascadeUpdateFromUnit, cascadeUpdateFromCourse } = require('../../utils/cascadeUpdate');
 
 const UnitController = {
     async createUnit(req, res) {
@@ -25,6 +26,7 @@ const UnitController = {
                 numericalOrder,
             });
             await Unit.create(fieldsToCreate);
+            await cascadeUpdateFromUnit(unitID);
             return res.status(201).json({ unitID, message: 'Created unit successfully' });
         } catch (error) {
             return res.status(500).json({ error: error.name });
@@ -79,14 +81,15 @@ const UnitController = {
             const { unitID } = req.params;
             const { unitName, description } = req.body;
             
-            const course = await Course.findByPk(courseID);
-            if (!course) return res.status(404).json({ error: 'Course not found' });
+            const unit = await Unit.findByPk(unitID);
+            if (!unit) return res.status(404).json({ error: 'Unit not found' });
             
             const updated = await Unit.update(
                 { unitName, description },
                 { where: { unitID } }
             );
             if (!updated[0]) return res.status(404).json({ error: 'Unit not found' });
+            await cascadeUpdateFromUnit(unitID);
             return res.status(200).json({ message: 'Unit updated successfully' });
 
         } catch (error) {
@@ -97,12 +100,16 @@ const UnitController = {
     async deleteUnit(req, res) {
         try {
             const { unitID } = req.params;
+            const unit = await Unit.findByPk(unitID);
+            if (!unit) return res.status(404).json({ error: 'Unit not found' });
+            const courseIDToCascade = unit.courseID;
             const deleted = await Unit.destroy({
                 where: {
                     unitID
                 }
             });
             if (!deleted) return res.status(404).json({ error: 'Unit not found' });
+            await cascadeUpdateFromCourse(courseIDToCascade);
             return res.status(200).json({ message: 'Unit deleted successfully' });
 
         } catch (error) {

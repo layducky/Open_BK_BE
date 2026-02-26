@@ -49,9 +49,15 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.DATE,
             allowNull: true,
         },
+        contentUpdatedAt: {
+            type: DataTypes.DATE,
+            allowNull: true,
+            defaultValue: DataTypes.NOW,
+        },
     }, {
         modelName: 'Test',
         tableName: 'Test',
+        timestamps: true,
         indexes: [{
             unique: true,
             fields: ['unitID', 'numericalOrder'],

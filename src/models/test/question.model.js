@@ -50,6 +50,7 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     modelName: 'Question',
     tableName: 'Question',
+    timestamps: true,
     indexes: [{
       unique: true,
       fields: ['testID', 'numericalOrder'],

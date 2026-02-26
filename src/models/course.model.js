@@ -42,8 +42,14 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 0,
       allowNull: false,
     },
+    contentUpdatedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: DataTypes.NOW,
+    },
   }, {
     modelName: 'Course',
     tableName: 'Course',
+    timestamps: true,
   });
 }

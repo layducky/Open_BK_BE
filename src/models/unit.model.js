@@ -24,6 +24,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    contentUpdatedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: DataTypes.NOW,
+    },
   }, {
     modelName: 'Unit',
     tableName: 'Unit',

@@ -1,6 +1,7 @@
 const { Test, Question } = require('../../../sequelize');
 const { generateQuestionID } = require('../../../utils/generateID');
 const {filterNull, checkNull} = require('../../../utils/checkNull');
+const { cascadeUpdateFromQuestion, cascadeUpdateFromTest } = require('../../../utils/cascadeUpdate');
 
 
 const QuestionController = {
@@ -35,6 +36,7 @@ const QuestionController = {
             
             await Question.create(filterCreate);
             await Test.increment('numQuests', {where: { testID }});
+            await cascadeUpdateFromQuestion(questionID);
             res.status(201).json({ questionID, message:'Created question successfully'});
 
         } catch (error) {
@@ -86,6 +88,7 @@ const QuestionController = {
             );
 
             if (!updated[0]) return res.status(404).json({ message: 'Question not found' });
+            await cascadeUpdateFromQuestion(questionID);
             res.status(200).json({ message: 'Question updated successfully' });
 
         } catch (error) {
@@ -103,8 +106,10 @@ const QuestionController = {
             const test = await Test.findByPk(question.testID);
             if (!test) return res.status(404).json({ error: 'Test not found' });
 
+            const testIDToCascade = question.testID;
             await Question.destroy({ where: { questionID } });
-            await Test.decrement('numQuests', {where: { testID: question.testID }});
+            await Test.decrement('numQuests', {where: { testID: testIDToCascade }});
+            await cascadeUpdateFromTest(testIDToCascade);
             res.status(200).json({ message: 'Question deleted successfully' });
 
         } catch (error) {
