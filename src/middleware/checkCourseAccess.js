@@ -2,7 +2,7 @@
  * Kiểm tra quyền truy cập course: enrolled (LEARNER) | author (COLLAB) | ADMIN
  * Dùng cho course content, units, tests - không lộ thông tin ngoài phạm vi
  */
-const { Course, Participate, Unit, Test, Question, Document } = require('../sequelize');
+const { Course, Participate, Unit, Test, Question, Document, Video } = require('../sequelize');
 
 const checkCourseAccess = async (req, res, next) => {
   try {
@@ -20,6 +20,13 @@ const checkCourseAccess = async (req, res, next) => {
       const doc = await Document.findByPk(req.params.documentID, { attributes: ['unitID'] });
       if (!doc) return res.status(404).json({ message: 'Document not found' });
       const unit = await Unit.findByPk(doc.unitID, { attributes: ['courseID'] });
+      if (!unit) return res.status(404).json({ message: 'Unit not found' });
+      courseID = unit.courseID;
+    }
+    if (!courseID && req.params.videoID) {
+      const video = await Video.findByPk(req.params.videoID, { attributes: ['unitID'] });
+      if (!video) return res.status(404).json({ message: 'Video not found' });
+      const unit = await Unit.findByPk(video.unitID, { attributes: ['courseID'] });
       if (!unit) return res.status(404).json({ message: 'Unit not found' });
       courseID = unit.courseID;
     }

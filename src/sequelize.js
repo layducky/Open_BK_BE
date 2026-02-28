@@ -14,6 +14,7 @@ const UserTestModel = require("./models/test/userTest.model");
 const SubmissionModel = require("./models/test/submission.model");
 const quesAnswerModel = require("./models/test/quesAns.model");
 const DocumentModel = require("./models/document.model");
+const VideoModel = require("./models/video.model");
 
 pg.defaults.ssl = process.env.SSL || false;
 const DB_DIALECT = process.env.DB_DIALECT || 'postgres';
@@ -38,6 +39,7 @@ const UserTest = UserTestModel(sequelize, DataTypes);
 const Submission = SubmissionModel(sequelize, DataTypes);
 const QuesAns = quesAnswerModel(sequelize, DataTypes);
 const Document = DocumentModel(sequelize, DataTypes);
+const Video = VideoModel(sequelize, DataTypes);
 
 User.belongsToMany(Course, {
   through: Participate,
@@ -67,9 +69,11 @@ Course.belongsTo(User, {
 Unit.belongsTo(Course, { foreignKey: 'courseID', as: 'course_units', onDelete: 'CASCADE' });
 Unit.hasMany(Test, { foreignKey: 'unitID', as: 'unit_tests' });
 Unit.hasMany(Document, { foreignKey: 'unitID', as: 'unit_documents' });
+Unit.hasMany(Video, { foreignKey: 'unitID', as: 'unit_videos' });
 
 Test.belongsTo(Unit, { foreignKey: 'unitID', as: 'unit_tests', onDelete: 'CASCADE' });
 Document.belongsTo(Unit, { foreignKey: 'unitID', as: 'unit_documents', onDelete: 'CASCADE' });
+Video.belongsTo(Unit, { foreignKey: 'unitID', as: 'unit_videos', onDelete: 'CASCADE' });
 Test.hasMany(UserTest, { foreignKey: 'testID', as: 'user_tests' });
 Test.hasMany(Submission, { foreignKey: 'testID', as: 'test_submissions' });
 Test.hasMany(Question, { foreignKey: 'testID', as: 'test_questions' });
@@ -139,4 +143,5 @@ module.exports = {
   Submission,
   QuesAns,
   Document,
+  Video,
 };

@@ -1,4 +1,4 @@
-const { Unit, Course, Test, Document } = require('../../sequelize');
+const { Unit, Course, Test, Document, Video } = require('../../sequelize');
 const { generateUnitID } = require('../../utils/generateID');
 const {filterNull, checkNull} = require('../..//utils/checkNull');
 const { cascadeUpdateFromUnit, cascadeUpdateFromCourse } = require('../../utils/cascadeUpdate');
@@ -53,6 +53,11 @@ const UnitController = {
                         as: 'unit_documents',
                         attributes: ['documentID', 'documentName', 'fileUrl'],
                     },
+                    {
+                        model: Video,
+                        as: 'unit_videos',
+                        attributes: ['videoID', 'videoName', 'fileUrl', 'fileType'],
+                    },
                 ],
             });
             const unitsWithDownloadUrl = units.map((unit) => {
@@ -61,6 +66,12 @@ const UnitController = {
                     documentID: doc.documentID,
                     documentName: doc.documentName,
                     downloadUrl: doc.fileUrl || '',
+                }));
+                u.unit_videos = (u.unit_videos || []).map((vid) => ({
+                    videoID: vid.videoID,
+                    videoName: vid.videoName,
+                    fileUrl: vid.fileUrl || '',
+                    fileType: vid.fileType || '',
                 }));
                 return u;
             });

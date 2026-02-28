@@ -34,6 +34,11 @@ const generateDocumentID = () => {
   return `DOC${randomID}`;
 };
 
+const generateVideoID = () => {
+  const randomID = Math.floor(100 + Math.random() * 90000000);
+  return `VID${randomID}`;
+};
+
 module.exports = {
   generateLearnerID,
   generateCollabID,
@@ -41,5 +46,6 @@ module.exports = {
   generateTestID,
   generateUnitID,
   generateQuestionID,
-  generateDocumentID
+  generateDocumentID,
+  generateVideoID,
 };
