@@ -29,11 +29,17 @@ const generateQuestionID = (testID) => {
   return `QUE${numberPart}${randomID}`;
 };
 
+const generateDocumentID = () => {
+  const randomID = Math.floor(100 + Math.random() * 90000000);
+  return `DOC${randomID}`;
+};
+
 module.exports = {
   generateLearnerID,
   generateCollabID,
   generateCourseID,
   generateTestID,
   generateUnitID,
-  generateQuestionID
+  generateQuestionID,
+  generateDocumentID
 };

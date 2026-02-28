@@ -2,7 +2,7 @@
  * Cascade update timestamps when nested entities change.
  * Updates updatedAt for the entity and all its parents (test -> unit -> course).
  */
-const { Test, Unit, Course } = require('../sequelize');
+const { Test, Unit, Course, Document } = require('../sequelize');
 
 /**
  * Touch Test, Unit, Course when a question changes
@@ -27,6 +27,15 @@ async function cascadeUpdateFromTest(testID) {
     console.error('cascadeUpdateFromTest error:', err.message);
   }
   await cascadeUpdateFromUnit(test.unitID);
+}
+
+/**
+ * Touch Unit, Course when a document changes
+ */
+async function cascadeUpdateFromDocument(documentID) {
+  const document = await Document.findByPk(documentID);
+  if (!document) return;
+  await cascadeUpdateFromUnit(document.unitID);
 }
 
 /**
@@ -59,6 +68,7 @@ async function cascadeUpdateFromCourse(courseID) {
 module.exports = {
   cascadeUpdateFromQuestion,
   cascadeUpdateFromTest,
+  cascadeUpdateFromDocument,
   cascadeUpdateFromUnit,
   cascadeUpdateFromCourse,
 };

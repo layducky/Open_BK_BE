@@ -1,4 +1,4 @@
-const { Unit, Course, Test } = require('../../sequelize');
+const { Unit, Course, Test, Document } = require('../../sequelize');
 const { generateUnitID } = require('../../utils/generateID');
 const {filterNull, checkNull} = require('../..//utils/checkNull');
 const { cascadeUpdateFromUnit, cascadeUpdateFromCourse } = require('../../utils/cascadeUpdate');
@@ -48,9 +48,23 @@ const UnitController = {
                         as: 'unit_tests',
                         attributes: ['testID', 'testName', 'numQuests', 'duration'],
                     },
+                    {
+                        model: Document,
+                        as: 'unit_documents',
+                        attributes: ['documentID', 'documentName', 'fileUrl'],
+                    },
                 ],
             });
-            return res.status(200).json(units);
+            const unitsWithDownloadUrl = units.map((unit) => {
+                const u = unit.toJSON();
+                u.unit_documents = (u.unit_documents || []).map((doc) => ({
+                    documentID: doc.documentID,
+                    documentName: doc.documentName,
+                    downloadUrl: doc.fileUrl || '',
+                }));
+                return u;
+            });
+            return res.status(200).json(unitsWithDownloadUrl);
 
         } catch (error) {
             return res.status(500).json({ error: error.message });
