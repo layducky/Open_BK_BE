@@ -1,4 +1,5 @@
-const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { fromTemporaryCredentials } = require('@aws-sdk/credential-providers');
 const { fromEnv } = require('@aws-sdk/credential-providers');
 const s3Config = require('../configs/s3');
@@ -59,6 +60,21 @@ const uploadFile = async (buffer, key, mimetype) => {
 };
 
 /**
+ * Get presigned download URL (valid 1 hour)
+ * @param {string} key - S3 object key
+ * @returns {Promise<string>} - Presigned URL
+ */
+const getPresignedDownloadUrl = async (key) => {
+    if (!s3Config.bucketName || !key) return '';
+    const client = getS3Client();
+    const command = new GetObjectCommand({
+        Bucket: s3Config.bucketName,
+        Key: key,
+    });
+    return getSignedUrl(client, command, { expiresIn: 3600 });
+};
+
+/**
  * Delete file from S3
  * @param {string} key - S3 object key
  */
@@ -74,4 +90,5 @@ const deleteFile = async (key) => {
 module.exports = {
     uploadFile,
     deleteFile,
+    getPresignedDownloadUrl,
 };

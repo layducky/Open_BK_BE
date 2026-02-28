@@ -57,6 +57,22 @@ const DocumentController = {
         }
     },
 
+    async getDownloadUrl(req, res) {
+        try {
+            const { documentID } = req.params;
+            const document = await Document.findByPk(documentID);
+            if (!document) return res.status(404).json({ error: 'Document not found' });
+
+            const presignedUrl = await s3Service.getPresignedDownloadUrl(document.fileKey);
+            if (!presignedUrl) {
+                return res.status(503).json({ error: 'S3 not configured' });
+            }
+            return res.redirect(presignedUrl);
+        } catch (error) {
+            return res.status(500).json({ error: error.message });
+        }
+    },
+
     async deleteDocument(req, res) {
         try {
             const { documentID } = req.params;
