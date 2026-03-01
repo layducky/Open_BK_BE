@@ -14,6 +14,9 @@ const uploadMiddleware = (req, res, next) => {
 };
 
 router.use(verifyJWT(['COLLAB', 'ADMIN']));
+router.post('/:unitID/init-upload', checkCourseAccess, VideoController.initMultipartUpload);
+router.post('/:unitID/complete-upload', checkCourseAccess, VideoController.completeMultipartUpload);
+router.post('/:unitID/abort-upload', checkCourseAccess, VideoController.abortMultipartUpload);
 router.post('/:unitID', checkCourseAccess, uploadMiddleware, VideoController.uploadVideo);
 router.delete('/:videoID', checkCourseAccess, VideoController.deleteVideo);
 

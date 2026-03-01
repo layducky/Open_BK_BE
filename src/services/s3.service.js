@@ -1,4 +1,13 @@
-const { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
+const {
+    S3Client,
+    PutObjectCommand,
+    DeleteObjectCommand,
+    GetObjectCommand,
+    CreateMultipartUploadCommand,
+    UploadPartCommand,
+    CompleteMultipartUploadCommand,
+    AbortMultipartUploadCommand,
+} = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { fromTemporaryCredentials } = require('@aws-sdk/credential-providers');
 const { fromEnv } = require('@aws-sdk/credential-providers');
@@ -87,8 +96,88 @@ const deleteFile = async (key) => {
     }));
 };
 
+const PRESIGNED_UPLOAD_EXPIRES = 900; // 15 minutes
+
+/**
+ * Create multipart upload session
+ * @param {string} key - S3 object key
+ * @param {string} mimetype - MIME type
+ * @returns {Promise<{ uploadId: string }>}
+ */
+const createMultipartUpload = async (key, mimetype) => {
+    if (!s3Config.bucketName || !s3Config.region) {
+        throw new Error('S3 not configured');
+    }
+    const client = getS3Client();
+    const { UploadId } = await client.send(new CreateMultipartUploadCommand({
+        Bucket: s3Config.bucketName,
+        Key: key,
+        ContentType: mimetype,
+    }));
+    return { uploadId: UploadId };
+};
+
+/**
+ * Get presigned URL for uploading a single part
+ * @param {string} key - S3 object key
+ * @param {string} uploadId - Multipart upload ID
+ * @param {number} partNumber - Part number (1-based)
+ * @returns {Promise<string>} - Presigned PUT URL
+ */
+const getPresignedUploadPartUrl = async (key, uploadId, partNumber) => {
+    if (!s3Config.bucketName || !key || !uploadId) return '';
+    const client = getS3Client();
+    const command = new UploadPartCommand({
+        Bucket: s3Config.bucketName,
+        Key: key,
+        UploadId: uploadId,
+        PartNumber: partNumber,
+    });
+    return getSignedUrl(client, command, { expiresIn: PRESIGNED_UPLOAD_EXPIRES });
+};
+
+/**
+ * Complete multipart upload
+ * @param {string} key - S3 object key
+ * @param {string} uploadId - Multipart upload ID
+ * @param {Array<{ PartNumber: number; ETag: string }>} parts - Parts with PartNumber and ETag
+ * @returns {Promise<string>} - Final object URL
+ */
+const completeMultipartUpload = async (key, uploadId, parts) => {
+    if (!s3Config.bucketName || !s3Config.region || !key || !uploadId || !parts?.length) {
+        throw new Error('Invalid params for completeMultipartUpload');
+    }
+    const client = getS3Client();
+    await client.send(new CompleteMultipartUploadCommand({
+        Bucket: s3Config.bucketName,
+        Key: key,
+        UploadId: uploadId,
+        MultipartUpload: { Parts: parts },
+    }));
+    return `https://${s3Config.bucketName}.s3.${s3Config.region}.amazonaws.com/${key}`;
+};
+
+/**
+ * Abort multipart upload (cleanup on error/cancel)
+ * @param {string} key - S3 object key
+ * @param {string} uploadId - Multipart upload ID
+ */
+const abortMultipartUpload = async (key, uploadId) => {
+    if (!s3Config.bucketName || !key || !uploadId) return;
+    const client = getS3Client();
+    await client.send(new AbortMultipartUploadCommand({
+        Bucket: s3Config.bucketName,
+        Key: key,
+        UploadId: uploadId,
+    }));
+};
+
 module.exports = {
     uploadFile,
     deleteFile,
     getPresignedDownloadUrl,
+    createMultipartUpload,
+    getPresignedUploadPartUrl,
+    completeMultipartUpload,
+    abortMultipartUpload,
 };

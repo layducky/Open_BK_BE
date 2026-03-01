@@ -18,7 +18,6 @@ const {
   generateQuestionID,
 } = require("../src/utils/generateID");
 
-// RDS SSL - rejectUnauthorized: false để chấp nhận cert AWS
 const useSSL = process.env.SSL !== "false";
 const sslConfig = useSSL ? { rejectUnauthorized: false } : false;
 pg.defaults.ssl = sslConfig;
