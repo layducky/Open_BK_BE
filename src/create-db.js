@@ -10,7 +10,7 @@ async function createDbFromUrl(dbUrlString) {
     user: url.username,
     password: url.password,
     database: 'postgres',
-    ssl: process.env.SSL === 'true'
+    ssl: process.env.SSL !== 'false'
       ? { rejectUnauthorized: false }
       : false,
   })

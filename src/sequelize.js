@@ -16,8 +16,9 @@ const quesAnswerModel = require("./models/test/quesAns.model");
 const DocumentModel = require("./models/document.model");
 const VideoModel = require("./models/video.model");
 
-const useSSL = process.env.SSL === 'true';
-pg.defaults.ssl = useSSL;
+const useSSL = process.env.SSL !== 'false';
+const sslConfig = useSSL ? { rejectUnauthorized: false } : false;
+pg.defaults.ssl = sslConfig;
 const DB_DIALECT = process.env.DB_DIALECT || 'postgres';
 const sequelize = new Sequelize(process.env.DB_URL, {
   dialect: DB_DIALECT,
