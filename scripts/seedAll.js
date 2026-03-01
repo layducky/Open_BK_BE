@@ -18,11 +18,17 @@ const {
   generateQuestionID,
 } = require("../src/utils/generateID");
 
-pg.defaults.ssl = process.env.SSL || false;
+// RDS SSL - rejectUnauthorized: false để chấp nhận cert AWS
+const useSSL = process.env.SSL !== "false";
+const sslConfig = useSSL ? { rejectUnauthorized: false } : false;
+pg.defaults.ssl = sslConfig;
 const DB_DIALECT = process.env.DB_DIALECT || "postgres";
 const sequelize = new Sequelize(process.env.DB_URL, {
   dialect: DB_DIALECT,
   logging: false,
+  dialectOptions: useSSL
+    ? { ssl: { require: true, rejectUnauthorized: false } }
+    : {},
 });
 
 const User = UserModel(sequelize, DataTypes);
