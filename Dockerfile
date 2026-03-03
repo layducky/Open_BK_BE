@@ -2,10 +2,11 @@ FROM node:18-bullseye
 
 WORKDIR /usr/src/app
 
-COPY package*.json ./
+COPY package*.json ecosystem.config.js ./
 RUN npm install
 
 COPY . .
 EXPOSE 5000
 
-CMD ["npm", "start"]
+# PM2 cluster mode - tận dụng 2 vCPUs của t3.small
+CMD ["npx", "pm2-runtime", "start", "ecosystem.config.js"]
