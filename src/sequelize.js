@@ -23,6 +23,10 @@ const DB_DIALECT = process.env.DB_DIALECT || 'postgres';
 const sequelize = new Sequelize(process.env.DB_URL, {
   dialect: DB_DIALECT,
   logging: false,
+  pool: {
+    max: 50,
+    min: 0,
+  },
   dialectOptions: useSSL
     ? { ssl: { require: true, rejectUnauthorized: false } }
     : {},
