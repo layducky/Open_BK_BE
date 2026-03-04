@@ -1,7 +1,8 @@
 const { Unit, Course, Test, Document, Video } = require('../../sequelize');
 const { generateUnitID } = require('../../utils/generateID');
-const {filterNull, checkNull} = require('../..//utils/checkNull');
+const { filterNull, checkNull } = require('../../utils/checkNull');
 const { cascadeUpdateFromUnit, cascadeUpdateFromCourse } = require('../../utils/cascadeUpdate');
+const { getCache, setCache, delCachePattern, CACHE_TTL } = require('../../services/cache.service');
 
 const UnitController = {
     async createUnit(req, res) {
@@ -27,6 +28,7 @@ const UnitController = {
             });
             await Unit.create(fieldsToCreate);
             await cascadeUpdateFromUnit(unitID);
+            await delCachePattern(`course:units:${courseID}`);
             return res.status(201).json({ unitID, message: 'Created unit successfully' });
         } catch (error) {
             return res.status(500).json({ error: error.name });
@@ -36,6 +38,9 @@ const UnitController = {
     async getAllUnits(req, res) {
         try {
             const { courseID } = req.params;
+            const cacheKey = `course:units:${courseID}`;
+            const cached = await getCache(cacheKey);
+            if (cached) return res.status(200).json(cached);
 
             const course = await Course.findByPk(courseID);
             if (!course) return res.status(404).json({ error: 'Course not found' });
@@ -75,6 +80,7 @@ const UnitController = {
                 }));
                 return u;
             });
+            await setCache(cacheKey, unitsWithDownloadUrl, CACHE_TTL.UNITS);
             return res.status(200).json(unitsWithDownloadUrl);
 
         } catch (error) {
@@ -115,6 +121,7 @@ const UnitController = {
             );
             if (!updated[0]) return res.status(404).json({ error: 'Unit not found' });
             await cascadeUpdateFromUnit(unitID);
+            await delCachePattern(`course:units:${unit.courseID}`);
             return res.status(200).json({ message: 'Unit updated successfully' });
 
         } catch (error) {
@@ -135,6 +142,7 @@ const UnitController = {
             });
             if (!deleted) return res.status(404).json({ error: 'Unit not found' });
             await cascadeUpdateFromCourse(courseIDToCascade);
+            await delCachePattern(`course:units:${courseIDToCascade}`);
             return res.status(200).json({ message: 'Unit deleted successfully' });
 
         } catch (error) {

@@ -1,12 +1,16 @@
 const { Course, User, Participate } = require('../../sequelize');
 const { filterNull, checkNull } = require('../../utils/checkNull');
 const { Op } = require('sequelize');
+const { getCache, setCache, delCache, delCachePattern, CACHE_TTL } = require('../../services/cache.service');
 
 const CourseController = {
 
   async getAllCourses(req, res) {
     try {
       const { search, category, priceType } = req.query;
+      const cacheKey = `course:list:${category || 'ALL'}:${priceType || 'ALL'}:${(search || '').trim()}`;
+      const cached = await getCache(cacheKey);
+      if (cached) return res.status(200).json(cached);
       const filters = [];
 
       if (category && category !== 'ALL') {
@@ -62,6 +66,7 @@ const CourseController = {
         learnersCount: course.enrolledStudentsCount ?? 0,
       }));
 
+      await setCache(cacheKey, coursesWithCounts, CACHE_TTL.COURSE_LIST);
       res.status(200).json(coursesWithCounts);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -70,6 +75,10 @@ const CourseController = {
 
   async getCategories(req, res) {
     try {
+      const cacheKey = 'course:categories';
+      const cached = await getCache(cacheKey);
+      if (cached) return res.status(200).json(cached);
+
       const categories = [
         { value: 'MATH', label: 'Math' },
         { value: 'ENGLISH', label: 'English' },
@@ -77,6 +86,7 @@ const CourseController = {
         { value: 'ART', label: 'Art' },
         { value: 'NONE', label: 'None' },
       ];
+      await setCache(cacheKey, categories, CACHE_TTL.CATEGORIES);
       res.status(200).json(categories);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -86,6 +96,10 @@ const CourseController = {
   async getCourseByID(req, res) {
     try {
       const { courseID } = req.params;
+      const cacheKey = `course:detail:${courseID}`;
+      const cached = await getCache(cacheKey);
+      if (cached) return res.status(200).json(cached);
+
       const course = await Course.findOne({
         where: { courseID },
         include: {
@@ -107,6 +121,7 @@ const CourseController = {
         },
       };
 
+      await setCache(cacheKey, payload, CACHE_TTL.COURSE_DETAIL);
       res.status(200).json(payload);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -154,6 +169,9 @@ const CourseController = {
         return res.status(400).json({ error: 'No changes were made' });
       }
 
+      await delCache(`course:detail:${courseID}`);
+      await delCachePattern('course:list:*');
+
       res.status(200).json({ message: 'Updated course successfully' });
 
     } catch (error) {
@@ -174,6 +192,10 @@ const CourseController = {
 
       if(!deleted) return res.status(404).json({ error: 'Course not found' });
 
+      await delCache(`course:detail:${courseID}`);
+      await delCachePattern('course:list:*');
+      await delCachePattern(`course:units:*`);
+
       res.status(200).json({ message: 'Deleted course successfully' });
     }catch (error) {
       res.status(500).json({ error: error.message });
@@ -183,6 +205,9 @@ const CourseController = {
     try {
       const deleted = await Course.destroy({ where: {} });
       if (!deleted) return res.status(404).json({ error: 'No courses found to delete' });
+      await delCachePattern('course:list:*');
+      await delCachePattern('course:detail:*');
+      await delCachePattern('course:units:*');
       res.status(200).json({ message: 'All courses deleted successfully' });
     } catch (error) {
       res.status(500).json({ error: error.message });

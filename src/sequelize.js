@@ -127,8 +127,23 @@ const createDbFromUrl = require('./create-db');
     await createDbFromUrl(process.env.DB_URL);
     await sequelize.authenticate();
     console.log('Database connected');
-    await sequelize.sync({ alter: true });
-    console.log('Database synced');
+
+    try {
+      await sequelize.sync({ alter: true });
+      console.log('Database synced');
+    } catch (syncError) {
+      // Bỏ qua lỗi thiếu constraint cũ trên bảng Preview để không làm backend chết
+      if (
+        syncError.name === 'SequelizeUnknownConstraintError' &&
+        syncError.constraint === 'Preview_courseID_fkey'
+      ) {
+        console.warn(
+          'Warning: missing constraint "Preview_courseID_fkey" on table "Preview" – ignored during sync.'
+        );
+      } else {
+        throw syncError;
+      }
+    }
   } catch (error) {
     console.error('Unable to connect to the database:', error);
     process.exit(1);
