@@ -2,6 +2,7 @@ const { User, Participate, Course } = require('../../sequelize');
 const { Unit, Test, UserTest } = require('../../sequelize');
 const { sequelize } = require('../../sequelize');
 const { Op } = require('sequelize');
+const { delCache, delCachePattern } = require('../../services/cache.service');
 
 const courseEnroll = {
    async getEnrolledCourses (req, res) {
@@ -148,6 +149,10 @@ const courseEnroll = {
 
 
          await t.commit();
+         // Invalidate cache so UI reflects new enrolled state & learner count immediately
+         delCache(`course:detail:${courseID}`).catch(() => {});
+         delCachePattern('course:list:*').catch(() => {});
+         delCachePattern(`course:units:${courseID}`).catch(() => {});
          return res.status(201).json({ message: 'Enrolled in course successfully' });
       } catch (err) {
          console.error(err);
@@ -192,6 +197,11 @@ const courseEnroll = {
             });
             if (!stillEnrolled) await author.decrement('totalEnrolledStudentsCount');
           }
+
+         // Invalidate cache for immediate UI update
+         delCache(`course:detail:${courseID}`).catch(() => {});
+         delCachePattern('course:list:*').catch(() => {});
+         delCachePattern(`course:units:${courseID}`).catch(() => {});
 
          return res.status(200).json({ message: 'Deleted learner from course successfully' });
       } catch (err) {
