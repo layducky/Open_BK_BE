@@ -67,6 +67,13 @@ const COURSE_CONFIG = [
   { name: "ART 2", category: "ART", description: "Shapes and composition.", price: "0" },
 ];
 
+/** 3 câu hỏi giả để test system - dùng vòng lặp tạo nhanh */
+const DUMMY_QUESTIONS = [
+  { content: "Sample question 1?", ansA: "A", ansB: "B", ansC: "C", ansD: "D", correct: "B", explanation: "Answer is B" },
+  { content: "Sample question 2?", ansA: "A", ansB: "B", ansC: "C", ansD: "D", correct: "C", explanation: "Answer is C" },
+  { content: "Sample question 3?", ansA: "A", ansB: "B", ansC: "C", ansD: "D", correct: "A", explanation: "Answer is A" },
+];
+
 // 6 questions per category - meaningful and simple
 const QUESTIONS_BY_CATEGORY = {
   MATH: [
@@ -229,8 +236,102 @@ const QUESTIONS_BY_CATEGORY = {
       });
     }
 
+    // Thêm 100 course: Course 1 .. Course 100, mỗi course 1 unit, 1 test, 3 câu hỏi
+    const CATEGORIES = ["MATH", "ENGLISH", "CODE", "ART"];
+    for (let n = 1; n <= 100; n++) {
+      const name = `Course ${n}`;
+      const category = CATEGORIES[(n - 1) % CATEGORIES.length];
+      const price = n % 3 === 0 ? "0" : randomPrice();
+
+      let course = await Course.findOne({
+        where: { authorID: collab.userID, courseName: name },
+      });
+
+      if (!course) {
+        const courseID = generateCourseID();
+        course = await Course.create({
+          courseID,
+          authorID: collab.userID,
+          courseName: name,
+          image: DEFAULT_COURSE_IMAGE,
+          description: `Description for ${name}.`,
+          category,
+          price,
+        });
+      }
+
+      let unit = await Unit.findOne({
+        where: { courseID: course.courseID, numericalOrder: 1 },
+      });
+
+      if (!unit) {
+        const unitID = generateUnitID(course.courseID);
+        unit = await Unit.create({
+          unitID,
+          courseID: course.courseID,
+          numericalOrder: 1,
+          unitName: `Unit 1: ${name}`,
+          description: `First unit of ${name}.`,
+        });
+      }
+
+      let test = await Test.findOne({
+        where: { unitID: unit.unitID, numericalOrder: 1 },
+      });
+
+      if (!test) {
+        const testID = generateTestID();
+        test = await Test.create({
+          testID,
+          unitID: unit.unitID,
+          testName: `${name} Quiz`,
+          numericalOrder: 1,
+          description: `Quiz for ${name}.`,
+          numQuests: 0,
+          duration: 15,
+          maxAttempts: 3,
+          openDate: new Date(),
+          closeDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        });
+      }
+
+      for (let i = 1; i <= 3; i++) {
+        const existing = await Question.findOne({
+          where: { testID: test.testID, numericalOrder: i },
+        });
+        if (!existing) {
+          const q = DUMMY_QUESTIONS[i - 1];
+          const questionID = generateQuestionID(test.testID);
+          await Question.create({
+            questionID,
+            testID: test.testID,
+            numericalOrder: i,
+            content: q.content,
+            explanation: q.explanation,
+            correctAns: q.correct,
+            ansA: q.ansA,
+            ansB: q.ansB,
+            ansC: q.ansC,
+            ansD: q.ansD,
+          });
+        }
+      }
+
+      await Test.update({ numQuests: 3 }, { where: { testID: test.testID } });
+
+      await Preview.findOrCreate({
+        where: { courseID: course.courseID },
+        defaults: {
+          courseID: course.courseID,
+          descriptionHeader: `${name} preview`,
+          descriptionFull: `Learn ${name}.`,
+          objective: ["Complete 3 quiz questions"],
+        },
+      });
+    }
+
     console.log(
-      "SeedAll completed. Created/verified: 1 Admin, 1 Collab, 8 Courses (MATH 1-2, ENGLISH 1-2, CODE 1-2, ART 1-2), each with 1 Unit, 1 Test, 6 Questions."
+      "SeedAll completed. 1 Admin, 1 Collab, 8 Courses (6 Q/test) + 100 Courses (Course 1-100, 3 Q/test)."
     );
   } catch (err) {
     console.error("SeedAll failed:", err.message || err);

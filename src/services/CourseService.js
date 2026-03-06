@@ -4,12 +4,13 @@ const UserRepository = require('../repositories/UserRepository');
 const { getCache, setCache, delCache, delCachePattern, CACHE_TTL } = require('./cache.service');
 
 const CourseService = {
-  async getAllCourses(search, category, priceType) {
-    const cacheKey = `course:list:${category || 'ALL'}:${priceType || 'ALL'}:${(search || '').trim()}`;
+  async getAllCourses(search, category, priceType, page, limit) {
+    const cacheKey = `course:list:${category || 'ALL'}:${priceType || 'ALL'}:${(search || '').trim()}:${page || 'all'}:${limit || 'all'}`;
     const cached = await getCache(cacheKey);
     if (cached) return cached;
 
-    const courses = await CourseRepository.findWithFilters(search, category, priceType);
+    const offset = page != null && limit != null ? (page - 1) * limit : undefined;
+    const courses = await CourseRepository.findWithFilters(search, category, priceType, { limit, offset });
     if (!courses) return null;
 
     const courseIDs = courses.map((c) => c.courseID);
@@ -19,6 +20,13 @@ const CourseService = {
       ...course.toJSON(),
       learnersCount: countMap[course.courseID] ?? 0,
     }));
+
+    if (page != null && limit != null) {
+      const total = await CourseRepository.countWithFilters(search, category, priceType);
+      const payload = { courses: coursesWithCounts, total };
+      await setCache(cacheKey, payload, CACHE_TTL.COURSE_LIST);
+      return payload;
+    }
 
     await setCache(cacheKey, coursesWithCounts, CACHE_TTL.COURSE_LIST);
     return coursesWithCounts;

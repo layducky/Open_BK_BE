@@ -7,8 +7,10 @@ const CourseController = {
 
   async getAllCourses(req, res) {
     try {
-      const { search, category, priceType } = req.query;
-      const courses = await CourseService.getAllCourses(search, category, priceType);
+      const { search, category, priceType, page, limit } = req.query;
+      const pageNum = page ? parseInt(page, 10) : undefined;
+      const limitNum = limit ? parseInt(limit, 10) : undefined;
+      const courses = await CourseService.getAllCourses(search, category, priceType, pageNum, limitNum);
       if (!courses) return res.status(404).json({ message: 'No course is found' });
       res.status(200).json(courses);
     } catch (error) {
