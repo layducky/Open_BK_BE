@@ -5,7 +5,8 @@ const { getCache, setCache, delCache, delCachePattern, CACHE_TTL } = require('./
 
 const CourseService = {
   async getAllCourses(search, category, priceType, page, limit) {
-    const cacheKey = `course:list:${category || 'ALL'}:${priceType || 'ALL'}:${(search || '').trim()}:${page || 'all'}:${limit || 'all'}`;
+    const normSearch = (search || '').trim().replace(/\s+/g, ' ');
+    const cacheKey = `course:list:${category || 'ALL'}:${priceType || 'ALL'}:${normSearch}:${page ?? 'all'}:${limit ?? 'all'}`;
     const cached = await getCache(cacheKey);
     if (cached) return cached;
 
@@ -22,7 +23,12 @@ const CourseService = {
     }));
 
     if (page != null && limit != null) {
-      const total = await CourseRepository.countWithFilters(search, category, priceType);
+      const countKey = `course:count:${category || 'ALL'}:${priceType || 'ALL'}:${normSearch}`;
+      let total = await getCache(countKey);
+      if (total == null) {
+        total = await CourseRepository.countWithFilters(search, category, priceType);
+        await setCache(countKey, total, CACHE_TTL.COURSE_LIST);
+      }
       const payload = { courses: coursesWithCounts, total };
       await setCache(cacheKey, payload, CACHE_TTL.COURSE_LIST);
       return payload;
@@ -81,6 +87,7 @@ const CourseService = {
 
   async invalidateCourseCache(courseID) {
     await delCachePattern('course:list:*').catch(() => {});
+    await delCachePattern('course:count:*').catch(() => {});
     if (courseID) {
       await delCache(`course:detail:${courseID}`).catch(() => {});
       await delCachePattern(`course:units:${courseID}`).catch(() => {});
