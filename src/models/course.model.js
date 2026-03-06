@@ -51,5 +51,9 @@ module.exports = (sequelize, DataTypes) => {
     modelName: 'Course',
     tableName: 'Course',
     timestamps: true,
+    indexes: [
+      { fields: ['authorID'] },
+      { fields: ['category', 'price'] },
+    ],
   });
 }

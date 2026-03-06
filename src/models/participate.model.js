@@ -29,5 +29,6 @@ module.exports = (sequelize, DataTypes) => {
     modelName: 'Participate',
     tableName: 'Participate',
     timestamps: true,
+    indexes: [{ fields: ['courseID'] }],
   });
 };

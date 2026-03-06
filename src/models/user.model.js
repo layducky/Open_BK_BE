@@ -64,7 +64,14 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     modelName: 'User',
     tableName: 'User',
-    timestamps: true, 
+    timestamps: true,
+    hooks: {
+      beforeSave(user) {
+        if (user.enrolledCoursesCount != null && user.enrolledCoursesCount < 0) user.enrolledCoursesCount = 0;
+        if (user.totalEnrolledStudentsCount != null && user.totalEnrolledStudentsCount < 0) user.totalEnrolledStudentsCount = 0;
+        if (user.createdCoursesCount != null && user.createdCoursesCount < 0) user.createdCoursesCount = 0;
+      },
+    },
   });
 };
 

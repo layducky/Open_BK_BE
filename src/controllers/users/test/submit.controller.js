@@ -1,4 +1,5 @@
 const { Submission, UserTest, Question, Test, QuesAns, sequelize } = require('../../../sequelize');
+const SubmissionRepository = require('../../../repositories/SubmissionRepository');
 
 const SubmitController = {
     async createSubmit(req, res) {
@@ -121,30 +122,27 @@ const SubmitController = {
             }
 
             const itemsToProcess = validItems.length > 0 ? validItems : submission.filter(i => i?.questionID);
-            const quesAnsPromises = itemsToProcess.map(async item => {
-                const question = await Question.findOne({
-                    where: {
-                        questionID: item.questionID,
-                        testID: submissionRecord.testID,
-                    },
-                    transaction: t,
-                });
-                if (!question) {
-                    throw new Error(`Invalid questionID: ${item.questionID}`);
-                }
+            const questionIDs = [...new Set(itemsToProcess.map((i) => i.questionID))];
+            const questions = await SubmissionRepository.findQuestionsByTestAndIds(
+                submissionRecord.testID,
+                questionIDs,
+                { transaction: t }
+            );
+            const questionMap = new Map(questions.map((q) => [q.questionID, q]));
 
-                const isCorrect = question?.correctAns === item.selectedAns;
-                await QuesAns.upsert({
+            let numRightAns = 0;
+            for (const item of itemsToProcess) {
+                const question = questionMap.get(item.questionID);
+                if (!question) throw new Error(`Invalid questionID: ${item.questionID}`);
+                const isCorrect = question.correctAns === item.selectedAns;
+                if (isCorrect) numRightAns++;
+                await SubmissionRepository.upsertQuesAns({
                     submissionID,
                     questionID: item.questionID,
                     selectedAns: item.selectedAns,
                     isCorrect,
                 }, { transaction: t });
-
-                return isCorrect ? 1 : 0;
-            });
-            const AnsList = await Promise.all(quesAnsPromises);
-            const numRightAns = AnsList.reduce((sum, correct) => sum + correct, 0);
+            }
             const numQuests = test?.numQuests ?? 1;
             const totalScore = (numRightAns / numQuests) * 100 || 0;
             let submittedAt = null;

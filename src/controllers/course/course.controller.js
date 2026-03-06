@@ -1,6 +1,6 @@
-const { Course, User, Participate } = require('../../sequelize');
+const CourseRepository = require('../../repositories/CourseRepository');
+const CourseService = require('../../services/CourseService');
 const { filterNull, checkNull } = require('../../utils/checkNull');
-const { Op } = require('sequelize');
 const { getCache, setCache, delCache, delCachePattern, CACHE_TTL } = require('../../services/cache.service');
 
 const CourseController = {
@@ -8,66 +8,9 @@ const CourseController = {
   async getAllCourses(req, res) {
     try {
       const { search, category, priceType } = req.query;
-      const cacheKey = `course:list:${category || 'ALL'}:${priceType || 'ALL'}:${(search || '').trim()}`;
-      const cached = await getCache(cacheKey);
-      if (cached) return res.status(200).json(cached);
-      const filters = [];
-
-      if (category && category !== 'ALL') {
-        filters.push({ category });
-      }
-
-      if (priceType === 'FREE') {
-        filters.push({
-          [Op.or]: [
-            { price: 'Free' },
-            { price: '0' },
-            { price: '0.0' },
-            { price: '0.00' },
-          ],
-        });
-      } else if (priceType === 'PAID') {
-        filters.push({
-          price: {
-            [Op.notIn]: ['Free', '0', '0.0', '0.00'],
-          },
-        });
-      }
-
-      if (search && search.trim() !== '') {
-        const query = search.trim();
-        filters.push({
-          [Op.or]: [
-            { courseName: { [Op.like]: `%${query}%` } },
-            { description: { [Op.like]: `%${query}%` } },
-          ],
-        });
-      }
-
-      const where =
-        filters.length > 0
-          ? {
-              [Op.and]: filters,
-            }
-          : undefined;
-
-      const courses = await Course.findAll({
-        where,
-        include: {
-          model: User,
-          as: 'authorInfo',
-          attributes: ['name', 'image'],
-        },
-      });
+      const courses = await CourseService.getAllCourses(search, category, priceType);
       if (!courses) return res.status(404).json({ message: 'No course is found' });
-
-      const coursesWithCounts = courses.map((course) => ({
-        ...course.toJSON(),
-        learnersCount: course.enrolledStudentsCount ?? 0,
-      }));
-
-      await setCache(cacheKey, coursesWithCounts, CACHE_TTL.COURSE_LIST);
-      res.status(200).json(coursesWithCounts);
+      res.status(200).json(courses);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -96,32 +39,8 @@ const CourseController = {
   async getCourseByID(req, res) {
     try {
       const { courseID } = req.params;
-      const cacheKey = `course:detail:${courseID}`;
-      const cached = await getCache(cacheKey);
-      if (cached) return res.status(200).json(cached);
-
-      const course = await Course.findOne({
-        where: { courseID },
-        include: {
-          model: User,
-          as: 'authorInfo',
-          attributes: ['name', 'image', 'createdCoursesCount', 'totalEnrolledStudentsCount'],
-        },
-      });
-      if (!course) return res.status(404).json({ message: 'No course is found' });
-
-      const learnersCount = course.enrolledStudentsCount ?? 0;
-      const author = course.authorInfo;
-      const payload = {
-        ...course.toJSON(),
-        learnersCount,
-        authorStats: {
-          totalLearners: author?.totalEnrolledStudentsCount ?? 0,
-          ownedCourses: author?.createdCoursesCount ?? 0,
-        },
-      };
-
-      await setCache(cacheKey, payload, CACHE_TTL.COURSE_DETAIL);
+      const payload = await CourseService.getCourseByID(courseID);
+      if (!payload) return res.status(404).json({ message: 'No course is found' });
       res.status(200).json(payload);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -145,12 +64,13 @@ const CourseController = {
         courseName: newCourseName,
       });
 
-      const course = await Course.findByPk(courseID);
+      const course = await CourseRepository.findById(courseID);
       if (!course) {
         return res.status(404).json({ error: 'Course not found' });
       }
 
-      const author = await User.findByPk(newAuthorID);
+      const UserRepository = require('../../repositories/UserRepository');
+      const author = await UserRepository.findByPk(newAuthorID);
       if (!author) {
         return res.status(404).json({ error: 'Author not found' });
       }
@@ -162,15 +82,12 @@ const CourseController = {
         return res.status(403).json({ error: 'You are not the author of this course and cannot update it' });
       }
 
-      const [updatedRowsCount] = await Course.update(fieldsToUpdate, {
-        where: { courseID: courseID },
-      });
+      const [updatedRowsCount] = await CourseRepository.update(courseID, fieldsToUpdate);
       if (updatedRowsCount === 0) {
         return res.status(400).json({ error: 'No changes were made' });
       }
 
-      await delCache(`course:detail:${courseID}`);
-      await delCachePattern('course:list:*');
+      await CourseService.invalidateCourseCache(courseID);
 
       res.status(200).json({ message: 'Updated course successfully' });
 
@@ -184,17 +101,11 @@ const CourseController = {
   async deleteCourse (req, res) {
     try {
       const { courseID }  = req.params;
-      deleted = await Course.destroy({
-        where:{
-          courseID,
-        },
-      })
+      const deleted = await CourseRepository.destroy(courseID);
 
       if(!deleted) return res.status(404).json({ error: 'Course not found' });
 
-      await delCache(`course:detail:${courseID}`);
-      await delCachePattern('course:list:*');
-      await delCachePattern(`course:units:*`);
+      await CourseService.invalidateCourseCache(courseID);
 
       res.status(200).json({ message: 'Deleted course successfully' });
     }catch (error) {
@@ -203,11 +114,9 @@ const CourseController = {
   },
   async deleteAllCourses(req, res) {
     try {
-      const deleted = await Course.destroy({ where: {} });
+      const deleted = await CourseRepository.destroyAll();
       if (!deleted) return res.status(404).json({ error: 'No courses found to delete' });
-      await delCachePattern('course:list:*');
-      await delCachePattern('course:detail:*');
-      await delCachePattern('course:units:*');
+      await CourseService.invalidateCourseCache();
       res.status(200).json({ message: 'All courses deleted successfully' });
     } catch (error) {
       res.status(500).json({ error: error.message });

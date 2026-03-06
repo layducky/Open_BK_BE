@@ -1,7 +1,8 @@
-const { User, Course, Participate } = require('../../sequelize');
 const { generateCourseID } = require('../../utils/generateID');
-const {filterNull, checkNull} = require('../../utils/checkNull');
-const { sequelize } = require('../../sequelize');
+const { filterNull, checkNull } = require('../../utils/checkNull');
+const CourseRepository = require('../../repositories/CourseRepository');
+const ParticipateRepository = require('../../repositories/ParticipateRepository');
+const CourseService = require('../../services/CourseService');
 
 const CourseCollab = {
   async createCourse(req, res) {
@@ -29,10 +30,7 @@ const CourseCollab = {
         price
       });
 
-      await Course.create(fieldsToCreate);
-
-      const author = await User.findByPk(req.user.userID);
-      if (author) await author.increment('createdCoursesCount');
+      await CourseRepository.create(fieldsToCreate);
 
       return res.status(201).json({courseID, message: 'Course creation is successful' });
 
@@ -44,16 +42,7 @@ const CourseCollab = {
    async getAllOwnedCourses (req, res) {
       try {
 
-         const ownedCourses = await Course.findAll({
-            where: {
-               authorID: req.user.userID,
-            },
-            include: {
-               model: User,
-               as: 'authorInfo',
-               attributes: ['name', 'image'],
-            },
-          });
+         const ownedCourses = await CourseRepository.findByAuthor(req.user.userID);
 
          if (ownedCourses.length === 0) {
             return res.status(404).json({ error: 'No owned courses found for this author' });
@@ -71,16 +60,12 @@ const CourseCollab = {
 
          const { courseID } = req.params;
 
-         const course = await Course.findByPk(courseID);
+         const course = await CourseRepository.findById(courseID);
          if (!course) {
             return res.status(404).json({ error: 'Course not found' });
          }
 
-         const learners = await Participate.findAll({
-            where: {
-               courseID,
-            },
-         });
+         const learners = await ParticipateRepository.findByCourse(courseID);
 
          if (learners.length === 0) {
             return res.status(404).json({ error: 'No learners found for this course' });
@@ -101,7 +86,7 @@ async updateCourse(req, res) {
          if (checkNull({ courseName, image, category, description, price })) {
             return res.status(400).json({ message: 'Course update failed, some fields are missing' });
          }
-         const course = await Course.findByPk(courseID);
+         const course = await CourseRepository.findById(courseID);
          if (!course) {
             return res.status(404).json({ message: 'Course not found' });
          }
@@ -130,28 +115,8 @@ async updateCourse(req, res) {
    async deleteCourse (req, res) {
       try {
          const { courseID } = req.params;
-         const course = await Course.findByPk(courseID);
-         if (!course) return res.status(404).json({ error: 'Course not found' });
-
-         const authorID = course.authorID;
-         const enrolledCount = course.enrolledStudentsCount || 0;
-         const participations = await Participate.findAll({ where: { courseID }, attributes: ['learnerID'] });
-         const learnerIDs = [...new Set(participations.map((p) => p.learnerID))];
-
-         await Participate.destroy({ where: { courseID } });
-         const deleted = await Course.destroy({ where: { courseID } });
-         if (!deleted) return res.status(500).json({ error: 'Failed to delete course' });
-
-         const author = await User.findByPk(authorID);
-         if (author) {
-           await author.decrement('createdCoursesCount');
-           if (enrolledCount > 0) await author.decrement('totalEnrolledStudentsCount', { by: enrolledCount });
-         }
-         for (const lid of learnerIDs) {
-           const learner = await User.findByPk(lid);
-           if (learner) await learner.decrement('enrolledCoursesCount');
-         }
-
+         const result = await CourseService.deleteCourseWithCascade(courseID);
+         if (result.error) return res.status(result.status || 500).json({ error: result.error });
          res.status(200).json({ message: 'Deleted course successfully' });
       } catch (error) {
          res.status(500).json({ error: error.message });

@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node src/server",
     "dev": "nodemon src/server",
-    "build": "echo 'No build required'"
+    "build": "echo 'No build required'",
+    "repair:user-counts": "node scripts/repair-user-counts.js"
   },
   "keywords": [],
   "author": "",

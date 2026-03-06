@@ -51,10 +51,13 @@ module.exports = (sequelize, DataTypes) => {
     modelName: 'Question',
     tableName: 'Question',
     timestamps: true,
-    indexes: [{
-      unique: true,
-      fields: ['testID', 'numericalOrder'],
-      msg: 'Question with this order already exists.',
-    }]
+    indexes: [
+      {
+        unique: true,
+        fields: ['testID', 'numericalOrder'],
+        msg: 'Question with this order already exists.',
+      },
+      { fields: ['testID', 'questionID'] },
+    ]
   });
 };

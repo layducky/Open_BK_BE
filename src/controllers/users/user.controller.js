@@ -1,6 +1,6 @@
-const { User, Course } = require('../../sequelize')
+const { User } = require('../../sequelize')
 const bcrypt = require('bcrypt')
-const { deleteCourse } = require('../course/course.controller')
+const CourseService = require('../../services/CourseService')
 const { generateCollabID } = require('../../utils/generateID')
 const { filterNull, checkNull } = require('../../utils/checkNull')
 
@@ -53,12 +53,7 @@ const createCollab = async (req, res) => {
 const deleteUser = async (req, res) => {
    const { userID } = req.params
    try {
-      const courses = await Course.findAll({ where: { authorID: userID } })
-      if (courses.length > 0) {
-         for (let i = 0; i < courses.length; i++) {
-            await deleteCourse({ params: { courseID: courses[i].courseID } })
-         }
-      }
+      await CourseService.deleteCoursesByAuthor(userID)
       const deleted = await User.destroy({ where: { userID } })
       if (!deleted) return res.status(404).json({ error: 'User not found' });
       res.json({ message: 'Deleted user successfully' })
