@@ -103,7 +103,7 @@ const updateUserPassword = async (req, res) => {
       const updateUser = await User.findByPk(id)
       if (!updateUser) return res.status(404).json({ message: 'Updated fail, no user not found' })
 
-      const isMatch = await bcrypt.compare(password, user.password);
+      const isMatch = await bcrypt.compare(password, updateUser.password);
       if (!isMatch) return res.status(401).json({ message: 'Invalid current password' });
 
       const hashpwd = await bcrypt.hash(newPassword, 10)

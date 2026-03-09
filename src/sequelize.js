@@ -122,6 +122,7 @@ Participate.belongsTo(Course, {
 
 const createDbFromUrl = require('./create-db');
 
+if (process.env.NODE_ENV !== 'test') {
 (async () => {
   try {
     await createDbFromUrl(process.env.DB_URL);
@@ -149,6 +150,7 @@ const createDbFromUrl = require('./create-db');
     process.exit(1);
   }
 })();
+}
 
 module.exports = {
   sequelize,
