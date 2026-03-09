@@ -6,15 +6,16 @@
     "start": "node src/server",
     "dev": "nodemon src/server",
     "build": "echo 'No build required'",
-    "repair:user-counts": "node scripts/repair-user-counts.js"
+    "repair:user-counts": "node scripts/repair-user-counts.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "ioredis": "^5.4.1",
-    "pm2": "^6.0.14",
     "@aws-sdk/client-s3": "^3.1000.0",
     "@aws-sdk/credential-providers": "^3.1000.0",
     "@aws-sdk/s3-request-presigner": "^3.1000.0",
@@ -24,14 +25,17 @@
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "express-validator": "^7.3.1",
+    "ioredis": "^5.4.1",
     "jsonwebtoken": "^9.0.3",
     "mime": "^4.1.0",
     "multer": "^2.1.0",
     "pg": "^8.19.0",
     "pg-hstore": "^2.3.4",
+    "pm2": "^6.0.14",
     "sequelize": "^6.37.7"
   },
   "devDependencies": {
+    "jest": "^30.2.0",
     "nodemon": "^3.1.14",
     "sequelize-cli": "^6.6.5"
   }
